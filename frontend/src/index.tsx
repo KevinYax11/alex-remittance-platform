@@ -1,19 +1,25 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+export interface User {
+  user_id: number;
+  full_name: string;
+  role: "emisor" | "receptor";
+  access_token: string;
+}
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+export interface Transaction {
+  id: number;
+  user_id: number;
+  type: "envio" | "solicitud";
+  status: "pendiente" | "confirmado";
+  amount_usd: number;
+  amount_gtq: number;
+  exchange_rate: number;
+  note: string | null;
+  created_at: string;
+}
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+export interface TransactionListResponse {
+  items: Transaction[];
+  total: number;
+  page: number;
+  page_size: number;
+}
