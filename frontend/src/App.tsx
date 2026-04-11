@@ -2,7 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import PrivateRoute from "./components/common/PrivateRoute";
 import LoginPage from "./pages/LoginPage";
-import DashboardPage from "./pages/DashboardPage";
+import EmissorPage from "./pages/EmissorPage";
+import ReceptorPage from "./pages/ReceptorPage";
 
 function App() {
   return (
@@ -11,10 +12,18 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
-            path="/dashboard"
+            path="/dashboard/emisor"
             element={
-              <PrivateRoute>
-                <DashboardPage />
+              <PrivateRoute allowedRole="emisor">
+                <EmissorPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/dashboard/receptor"
+            element={
+              <PrivateRoute allowedRole="receptor">
+                <ReceptorPage />
               </PrivateRoute>
             }
           />
