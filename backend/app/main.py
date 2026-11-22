@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
 from app.api.v1.endpoints import auth, transactions, users
 
-app = FastAPI(title="Alex Remittance Platform", version="1.0.0")
+app = FastAPI(title="Senda Payments API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,4 +30,4 @@ app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 
 @app.get("/")
 async def root():
-    return {"message": "Alex Remittance Platform API"}
+    return {"message": "Senda Payments API"}

@@ -30,7 +30,7 @@ const ReceptorPage = () => {
     <div>
       <Navbar />
       <div style={{ padding: "20px", maxWidth: "900px", margin: "0 auto" }}>
-        <h2>Panel de Don Alex</h2>
+        <h2>Panel de Beneficiario y Recepción</h2>
         <TransactionForm onSuccess={fetchTransactions} />
         {loading ? (
           <p>Cargando transacciones...</p>

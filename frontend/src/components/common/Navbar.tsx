@@ -10,7 +10,7 @@ const Navbar = () => {
     navigate("/login");
   };
 
-  const roleLabel = user?.role === "emisor" ? "Emisor (Carlos)" : "Receptor (Don Alex)";
+  const roleLabel = user?.role === "emisor" ? "Emisor (Remitente)" : "Receptor (Beneficiario)";
 
   return (
     <header
@@ -26,7 +26,7 @@ const Navbar = () => {
     >
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: "#ffffff" }}>
-          Alex Remittance Platform
+          Senda Payments
         </h2>
       </div>
 
