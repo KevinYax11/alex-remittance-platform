@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import PrivateRoute from "./components/common/PrivateRoute";
 import LoginPage from "./pages/LoginPage";
-import EmissorPage from "./pages/EmissorPage";
+import EmisorPage from "./pages/EmisorPage";
 import ReceptorPage from "./pages/ReceptorPage";
 
 function App() {
@@ -15,7 +15,7 @@ function App() {
             path="/dashboard/emisor"
             element={
               <PrivateRoute allowedRole="emisor">
-                <EmissorPage />
+                <EmisorPage />
               </PrivateRoute>
             }
           />

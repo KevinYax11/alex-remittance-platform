@@ -32,14 +32,16 @@ const ReceptorPage = () => {
       <div style={{ padding: "20px", maxWidth: "900px", margin: "0 auto" }}>
         <h2>Panel de Don Alex</h2>
         <TransactionForm onSuccess={fetchTransactions} />
-        {loading ? <p>Cargando...</p> : (
+        {loading ? (
+          <p>Cargando transacciones...</p>
+        ) : (
           <TransactionList transactions={transactions} onRefresh={fetchTransactions} />
         )}
-        <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+        <div style={{ display: "flex", gap: "10px", marginTop: "20px", alignItems: "center" }}>
           <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
             Anterior
           </button>
-          <span>Pagina {page}</span>
+          <span>Página {page}</span>
           <button onClick={() => setPage((p) => p + 1)} disabled={transactions.length < 10}>
             Siguiente
           </button>

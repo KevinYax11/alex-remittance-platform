@@ -4,14 +4,18 @@ import { useAuth } from "../context/AuthContext";
 import LoginForm from "../components/auth/LoginForm";
 
 const LoginPage = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/dashboard");
+    if (isAuthenticated && user) {
+      if (user.role === "emisor") {
+        navigate("/dashboard/emisor");
+      } else {
+        navigate("/dashboard/receptor");
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   return (
     <div style={{ maxWidth: "400px", margin: "100px auto", padding: "20px" }}>

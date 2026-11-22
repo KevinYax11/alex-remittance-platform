@@ -6,7 +6,7 @@ import TransactionChart from "../components/dashboard/TransactionChart";
 import TransactionForm from "../components/dashboard/TransactionForm";
 import TransactionList from "../components/dashboard/TransactionList";
 
-const EmissorPage = () => {
+const EmisorPage = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -31,16 +31,16 @@ const EmissorPage = () => {
     <div>
       <Navbar />
       <div style={{ padding: "20px", maxWidth: "900px", margin: "0 auto" }}>
-        <h2>Panel de Envios - Carlos</h2>
+        <h2>Panel de Envíos - Carlos</h2>
         <TransactionForm onSuccess={fetchTransactions} />
-        <h3>Tendencia de Envios</h3>
-        {loading ? <p>Cargando grafico...</p> : <TransactionChart transactions={transactions} />}
+        <h3>Tendencia de Envíos</h3>
+        {loading ? <p>Cargando gráfico...</p> : <TransactionChart transactions={transactions} />}
         <TransactionList transactions={transactions} onRefresh={fetchTransactions} />
-        <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+        <div style={{ display: "flex", gap: "10px", marginTop: "20px", alignItems: "center" }}>
           <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
             Anterior
           </button>
-          <span>Pagina {page}</span>
+          <span>Página {page}</span>
           <button onClick={() => setPage((p) => p + 1)} disabled={transactions.length < 10}>
             Siguiente
           </button>
@@ -50,4 +50,4 @@ const EmissorPage = () => {
   );
 };
 
-export default EmissorPage;
+export default EmisorPage;
