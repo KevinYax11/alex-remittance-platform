@@ -31,7 +31,7 @@ const EmisorPage = () => {
     <div>
       <Navbar />
       <div style={{ padding: "20px", maxWidth: "900px", margin: "0 auto" }}>
-        <h2>Panel de Envíos - Carlos</h2>
+        <h2>Panel de Envíos y Transferencias</h2>
         <TransactionForm onSuccess={fetchTransactions} />
         <h3>Tendencia de Envíos</h3>
         {loading ? <p>Cargando gráfico...</p> : <TransactionChart transactions={transactions} />}

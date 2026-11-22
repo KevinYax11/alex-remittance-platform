@@ -19,7 +19,7 @@ const LoginPage = () => {
 
   return (
     <div style={{ maxWidth: "400px", margin: "100px auto", padding: "20px" }}>
-      <h1>Alex Remittance Platform</h1>
+      <h1 style={{ textAlign: "center", color: "#1a1a2e", marginBottom: "24px" }}>Senda Payments</h1>
       <LoginForm />
     </div>
   );

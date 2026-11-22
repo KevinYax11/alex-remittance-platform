@@ -16,7 +16,7 @@ const DashboardPage = () => {
         <h1>Bienvenido, {user?.full_name}</h1>
         <button onClick={handleLogout}>Cerrar Sesión</button>
       </div>
-      <p>Rol: {user?.role === "emisor" ? "Carlos (Hijo)" : "Don Alex"}</p>
+      <p>Rol: {user?.role === "emisor" ? "Emisor (Remitente)" : "Receptor (Beneficiario)"}</p>
       {user?.role === "emisor" ? (
         <div>
           <h2>Panel de Envíos</h2>

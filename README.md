@@ -1,14 +1,14 @@
-# Alex Remittance Platform
+# Senda Payments
 
-Plataforma full-stack para la gestión, cálculo y trazabilidad de remesas familiares entre Estados Unidos y Guatemala (USD / GTQ), con conversión de divisas en tiempo real, autenticación basada en roles y visualización analítica de tendencias.
+Plataforma full-stack para la gestión, cálculo y trazabilidad de pagos y remesas internacionales (USD / GTQ), con conversión de divisas en tiempo real, autenticación basada en roles y visualización analítica de tendencias financieras.
 
 ---
 
 ## Descripción del Proyecto
 
-**Alex Remittance Platform** resuelve la necesidad de coordinar de forma transparente el envío de remesas familiares entre dos roles fundamentales:
-* **Emisor (Carlos en EE.UU.):** Registra envíos en dólares estadounidenses (USD). La plataforma consulta automáticamente la tasa de cambio vigente (vía API Frankfurter con fallback resiliente) y calcula el valor equivalente en Quetzales guatemaltecos (GTQ). Además, cuenta con un panel analítico interactivo con gráficos de líneas para evaluar tendencias temporales.
-* **Receptor (Don Alex en Guatemala):** Puede solicitar fondos indicando montos en GTQ y confirmar de forma explícita la recepción de remesas enviadas, garantizando un ciclo cerrado y trazabilidad de cada transferencia.
+**Senda Payments** resuelve la necesidad de coordinar de forma transparente el envío de remesas y pagos transfronterizos entre dos roles fundamentales:
+* **Emisor / Remitente:** Registra envíos en dólares estadounidenses (USD). La plataforma consulta automáticamente la tasa de cambio vigente (vía API Frankfurter con fallback resiliente) y calcula el valor equivalente en Quetzales guatemaltecos (GTQ). Además, cuenta con un panel analítico interactivo con gráficos de líneas para evaluar tendencias temporales.
+* **Receptor / Beneficiario:** Puede solicitar fondos indicando montos en GTQ y confirmar de forma explícita la recepción de transferencias enviadas, garantizando un ciclo cerrado y trazabilidad de cada operación.
 
 ---
 
@@ -29,10 +29,10 @@ Plataforma full-stack para la gestión, cálculo y trazabilidad de remesas famil
 1. **Emisor (`emisor`)**:
    * Envía dinero en USD (`amount_usd`).
    * Consulta el historial paginado de transferencias y el total acumulado.
-   * Alterna la visualización de la gráfica de remesas entre USD y GTQ.
+   * Alterna la visualización de la gráfica de transferencias entre USD y GTQ.
 2. **Receptor (`receptor`)**:
    * Registra solicitudes de dinero en GTQ (`amount_gtq`).
-   * Visualiza remesas pendientes y confirma su recepción en un clic (`PATCH /transactions/{id}/confirm`).
+   * Visualiza transferencias pendientes y confirma su recepción en un clic (`PATCH /transactions/{id}/confirm`).
 
 ### Conversión de Moneda Resiliente
 El servicio `exchange_service.py` consulta la API pública de **Frankfurter** (`USD -> GTQ`). En caso de interrupciones de red o fallas de conectividad externa, implementa una tasa de contingencia (*fallback*) para garantizar alta disponibilidad en todo momento.
@@ -111,7 +111,7 @@ npm start
 ### Transacciones (`/api/v1/transactions`)
 * `POST /api/v1/transactions/` *(Protegido)* - Registrar un nuevo envío (`type: envio`, `amount_usd`) o solicitud (`type: solicitud`, `amount_gtq`).
 * `GET /api/v1/transactions/?page=1&page_size=10` *(Protegido)* - Listado paginado de transacciones del usuario.
-* `PATCH /api/v1/transactions/{transaction_id}/confirm` *(Protegido)* - Confirmación de recepción de remesa por parte del receptor.
+* `PATCH /api/v1/transactions/{transaction_id}/confirm` *(Protegido)* - Confirmación de recepción de fondos por parte del beneficiario.
 
 ---
 
@@ -120,15 +120,15 @@ npm start
 | Vista | Descripción |
 | :--- | :--- |
 | **Inicio de Sesión** | Formulario con validación de entradas, alertas de error y redirección automática según el rol asignado (`/dashboard/emisor` o `/dashboard/receptor`). |
-| **Panel Emisor (Carlos)** | Calculadora de envío USD a GTQ, gráfica interactiva de tendencias con selector de divisa y tabla de estado de remesas. |
-| **Panel Receptor (Don Alex)** | Formulario de solicitud de fondos en GTQ y listado interactivo con botón para confirmar la recepción de dinero. |
+| **Panel Emisor (Remitente)** | Calculadora de envío USD a GTQ, gráfica interactiva de tendencias con selector de divisa y tabla de estado de transacciones. |
+| **Panel Receptor (Beneficiario)** | Formulario de solicitud de fondos en GTQ y listado interactivo con botón para confirmar la recepción de transferencias. |
 
 ---
 
 ## Estructura del Repositorio
 
 ```text
-alex-remittance-platform/
+senda-payments/
 ├── backend/
 │   ├── app/
 │   │   ├── api/v1/endpoints/  # auth.py, transactions.py, users.py
