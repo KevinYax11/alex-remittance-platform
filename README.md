@@ -1,10 +1,10 @@
 # Alex Remittance Platform
 
-Plataforma full-stack para la gestión, cálculo y trazabilidad de remesas familiares entre Estados Unidos y Guatemala (USD ↔ GTQ), con conversión de divisas en tiempo real, autenticación basada en roles y visualización analítica de tendencias.
+Plataforma full-stack para la gestión, cálculo y trazabilidad de remesas familiares entre Estados Unidos y Guatemala (USD / GTQ), con conversión de divisas en tiempo real, autenticación basada en roles y visualización analítica de tendencias.
 
 ---
 
-## 📌 Descripción del Proyecto
+## Descripción del Proyecto
 
 **Alex Remittance Platform** resuelve la necesidad de coordinar de forma transparente el envío de remesas familiares entre dos roles fundamentales:
 * **Emisor (Carlos en EE.UU.):** Registra envíos en dólares estadounidenses (USD). La plataforma consulta automáticamente la tasa de cambio vigente (vía API Frankfurter con fallback resiliente) y calcula el valor equivalente en Quetzales guatemaltecos (GTQ). Además, cuenta con un panel analítico interactivo con gráficos de líneas para evaluar tendencias temporales.
@@ -12,7 +12,7 @@ Plataforma full-stack para la gestión, cálculo y trazabilidad de remesas famil
 
 ---
 
-## 🛠️ Stack Tecnológico
+## Stack Tecnológico
 
 | Capa | Tecnologías |
 | :--- | :--- |
@@ -23,7 +23,7 @@ Plataforma full-stack para la gestión, cálculo y trazabilidad de remesas famil
 
 ---
 
-## 🏛️ Arquitectura y Flujo de Trabajo
+## Arquitectura y Flujo de Trabajo
 
 ### Roles de Usuario
 1. **Emisor (`emisor`)**:
@@ -39,7 +39,7 @@ El servicio `exchange_service.py` consulta la API pública de **Frankfurter** (`
 
 ---
 
-## 🚀 Inicio Rápido con Docker Compose (2 Pasos)
+## Inicio Rápido con Docker Compose (2 Pasos)
 
 ### Requisitos Previos
 * [Docker](https://www.docker.com/) y Docker Compose instalados en tu sistema.
@@ -65,7 +65,7 @@ Una vez levantados los servicios:
 
 ---
 
-## 💻 Desarrollo Local (Sin Docker)
+## Desarrollo Local (Sin Docker)
 
 Si prefieres ejecutar los servicios directamente en tu entorno local:
 
@@ -99,7 +99,7 @@ npm start
 
 ---
 
-## 📡 Catálogo de Endpoints REST
+## Catálogo de Endpoints REST
 
 ### Autenticación (`/api/v1/auth`)
 * `POST /api/v1/auth/register` - Registro de nuevos usuarios (`full_name`, `email`, `password`, `role`).
@@ -115,7 +115,7 @@ npm start
 
 ---
 
-## 🖼️ Interfaz de Usuario
+## Interfaz de Usuario
 
 | Vista | Descripción |
 | :--- | :--- |
@@ -125,7 +125,7 @@ npm start
 
 ---
 
-## 📂 Estructura del Repositorio
+## Estructura del Repositorio
 
 ```text
 alex-remittance-platform/
@@ -161,6 +161,6 @@ alex-remittance-platform/
 
 ---
 
-## 📄 Licencia
+## Licencia
 
 Este proyecto está distribuido bajo la licencia MIT.
