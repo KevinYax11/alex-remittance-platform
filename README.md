@@ -1,5 +1,7 @@
 # Senda Payments
 
+[![CI](https://github.com/KevinYax11/senda-payments/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/KevinYax11/senda-payments/actions/workflows/ci.yml?query=branch%3Adevelop)
+
 Plataforma full-stack para la gestión, cálculo y trazabilidad de pagos y remesas internacionales (USD / GTQ), con conversión de divisas en tiempo real, autenticación basada en roles y visualización analítica de tendencias financieras.
 
 ---
