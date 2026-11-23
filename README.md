@@ -41,6 +41,21 @@ El servicio `exchange_service.py` consulta la API pública de **Frankfurter** (`
 
 ## Inicio Rápido con Docker Compose (2 Pasos)
 
+### Acceso demo
+
+Ejecuta `docker compose up --build` y abre **http://localhost:3000**. El modo demo
+crea ambas cuentas automáticamente al arrancar con la tabla de usuarios vacía.
+Usa **Probar como Remitente** o **Probar como Beneficiario** en el login, o ingresa
+las credenciales manualmente.
+
+| Rol | Correo | Contraseña |
+| :--- | :--- | :--- |
+| Remitente | `sender@sendapayments.com` | `SendaPass123!` |
+| Beneficiario | `receiver@sendapayments.com` | `SendaPass123!` |
+
+Las credenciales son públicas. Para un entorno con cuentas reales, configura
+`DEMO_MODE=false` antes de iniciar con una base de datos propia.
+
 ### Requisitos Previos
 * [Docker](https://www.docker.com/) y Docker Compose instalados en tu sistema.
 

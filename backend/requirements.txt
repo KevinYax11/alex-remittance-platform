@@ -1,11 +1,12 @@
-fastapi
+fastapi>=0.115,<0.130
 uvicorn[standard]
-sqlalchemy[asyncio]
+sqlalchemy[asyncio]>=2.0,<2.1
 asyncpg
 alembic
 pydantic[email]
 pydantic-settings
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt==4.0.1
 httpx
 python-multipart
