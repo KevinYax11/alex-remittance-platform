@@ -4,18 +4,22 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.database import AsyncSessionLocal, engine, Base
+from app.core.database import AsyncSessionLocal, engine
+from app.core.migrations import upgrade_database
 from app.api.v1.endpoints import auth, transactions, users
 from app.services.demo_service import seed_demo_users
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    if settings.DEMO_MODE:
-        async with AsyncSessionLocal.begin() as session:
-            await seed_demo_users(session)
-    yield
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(upgrade_database)
+        if settings.DEMO_MODE:
+            async with AsyncSessionLocal.begin() as session:
+                await seed_demo_users(session)
+        yield
+    finally:
+        await engine.dispose()
 
 
 app = FastAPI(title="Senda Payments API", version="1.0.0", lifespan=lifespan)

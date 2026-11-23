@@ -3,6 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import decode_access_token
+from app.models.transaction import TransactionType
+from app.models.user import RoleEnum
 from app.schemas.transaction import TransactionCreate, TransactionResponse, TransactionListResponse
 from app.services.transaction_service import create_transaction, get_transactions, confirm_transaction
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -26,7 +28,18 @@ async def create(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
+    required_role = (
+        RoleEnum.emisor if data.type == TransactionType.envio else RoleEnum.receptor
+    )
+    if current_user["role"] != required_role:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Operación no permitida.")
+
     transaction = await create_transaction(db, int(current_user["sub"]), data)
+    if transaction is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No se encontró un beneficiario con ese correo.",
+        )
     return transaction
 
 @router.get("/", response_model=TransactionListResponse)
@@ -44,10 +57,15 @@ async def confirm(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
+    if current_user["role"] != RoleEnum.receptor:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo el beneficiario puede confirmar la recepción.",
+        )
     transaction = await confirm_transaction(db, transaction_id, int(current_user["sub"]))
     if not transaction:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Transaction not found"
+            detail="Remesa no encontrada."
         )
     return transaction

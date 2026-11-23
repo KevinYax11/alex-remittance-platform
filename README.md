@@ -27,12 +27,12 @@ Plataforma full-stack para la gestión, cálculo y trazabilidad de pagos y remes
 
 ### Roles de Usuario
 1. **Emisor (`emisor`)**:
-   * Envía dinero en USD (`amount_usd`).
+   * Envía dinero en USD (`amount_usd`) al correo de un beneficiario registrado (`beneficiary_email`).
    * Consulta el historial paginado de transferencias y el total acumulado.
    * Alterna la visualización de la gráfica de transferencias entre USD y GTQ.
 2. **Receptor (`receptor`)**:
    * Registra solicitudes de dinero en GTQ (`amount_gtq`).
-   * Visualiza transferencias pendientes y confirma su recepción en un clic (`PATCH /transactions/{id}/confirm`).
+   * Visualiza los envíos dirigidos a su cuenta y confirma su recepción en un clic (`PATCH /transactions/{id}/confirm`). El remitente ve el mismo estado en su historial.
 
 ### Conversión de Moneda Resiliente
 El servicio `exchange_service.py` consulta la API pública de **Frankfurter** (`USD -> GTQ`). En caso de interrupciones de red o fallas de conectividad externa, implementa una tasa de contingencia (*fallback*) para garantizar alta disponibilidad en todo momento.
@@ -55,6 +55,11 @@ las credenciales manualmente.
 
 Las credenciales son públicas. Para un entorno con cuentas reales, configura
 `DEMO_MODE=false` antes de iniciar con una base de datos propia.
+
+Para probar el flujo completo, entra como remitente y envía una remesa a
+`receiver@sendapayments.com`. Cierra sesión, entra como beneficiario y pulsa
+**Confirmar Recepción**. Vuelve al panel del remitente para ver el estado
+**Confirmado**.
 
 ### Requisitos Previos
 * [Docker](https://www.docker.com/) y Docker Compose instalados en tu sistema.
@@ -81,6 +86,10 @@ Una vez levantados los servicios:
 ---
 
 ## Desarrollo Local (Sin Docker)
+
+El backend aplica las migraciones de Alembic al iniciar. Los volúmenes
+PostgreSQL de versiones anteriores se actualizan en el mismo lugar. Las remesas
+históricas sin beneficiario siguen disponibles en el historial de su autor.
 
 Si prefieres ejecutar los servicios directamente en tu entorno local:
 

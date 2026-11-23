@@ -17,4 +17,6 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     role = Column(Enum(RoleEnum), nullable=False)
 
-    transactions = relationship("Transaction", back_populates="user")
+    transactions = relationship(
+        "Transaction", back_populates="user", foreign_keys="Transaction.user_id"
+    )
