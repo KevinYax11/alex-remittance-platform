@@ -1,0 +1,16 @@
+**
+!backend/
+!backend/app/
+!backend/app/**
+!backend/migrations/
+!backend/migrations/**
+!backend/requirements.txt
+!frontend/
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/public/
+!frontend/public/**
+!frontend/src/
+!frontend/src/**
+!frontend/tsconfig.json
+**/__pycache__/

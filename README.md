@@ -125,6 +125,19 @@ npm start
 
 ---
 
+## Despliegue de la demo en Render
+
+El Blueprint [`render.yaml`](render.yaml) configura un servicio web y una base
+PostgreSQL independiente. [`Dockerfile.demo`](Dockerfile.demo) sirve React y la API
+bajo el mismo dominio. Render genera la clave JWT e inyecta la conexión interna
+de PostgreSQL.
+
+En Render, crea un **Blueprint**, vincula este repositorio y selecciona
+`develop`. Las actualizaciones automáticas se publican cuando pasan los checks
+de CI. Las cuentas y el historial demo son compartidos, así que usa únicamente
+datos ficticios. La base gratuita expira a los 30 días.
+[Documentación de Render](https://render.com/docs/free#free-postgres)
+
 ## Catálogo de Endpoints REST
 
 ### Autenticación (`/api/v1/auth`)
@@ -135,9 +148,9 @@ npm start
 * `GET /api/v1/users/me` *(Protegido)* - Retorna los datos del perfil del usuario actualmente autenticado.
 
 ### Transacciones (`/api/v1/transactions`)
-* `POST /api/v1/transactions/` *(Protegido)* - Registrar un nuevo envío (`type: envio`, `amount_usd`) o solicitud (`type: solicitud`, `amount_gtq`).
-* `GET /api/v1/transactions/?page=1&page_size=10` *(Protegido)* - Listado paginado de transacciones del usuario.
-* `PATCH /api/v1/transactions/{transaction_id}/confirm` *(Protegido)* - Confirmación de recepción de fondos por parte del beneficiario.
+* `POST /api/v1/transactions/` *(Protegido)* - Registrar un envío (`type: envio`, `amount_usd`, `beneficiary_email`) o una solicitud (`type: solicitud`, `amount_gtq`).
+* `GET /api/v1/transactions/?page=1&page_size=10` *(Protegido)* - Listar las transacciones creadas por la cuenta o dirigidas a ella.
+* `PATCH /api/v1/transactions/{transaction_id}/confirm` *(Protegido)* - Confirmar la recepción de un envío como su beneficiario asignado.
 
 ---
 

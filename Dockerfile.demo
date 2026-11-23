@@ -1,0 +1,22 @@
+FROM node:22-alpine AS frontend
+
+WORKDIR /web
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/public ./public
+COPY frontend/src ./src
+COPY frontend/tsconfig.json ./
+RUN REACT_APP_API_URL=/api/v1 REACT_APP_DEMO_MODE=true npm run build
+
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY backend/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/app ./app
+COPY backend/migrations ./migrations
+COPY --from=frontend /web/build ./web
+
+ENV FRONTEND_BUILD_DIR=/app/web
+EXPOSE 10000
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port \"${PORT:-10000}\""]
