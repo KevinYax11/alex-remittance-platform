@@ -1,13 +1,38 @@
 # Senda Payments
 
-Plataforma full-stack para la gestión, cálculo y trazabilidad de pagos y remesas internacionales (USD / GTQ), con conversión de divisas en tiempo real, autenticación basada en roles y visualización analítica de tendencias financieras.
+[![CI](https://github.com/KevinYax11/senda-payments/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/KevinYax11/senda-payments/actions/workflows/ci.yml?query=branch%3Adevelop)
 
----
+Demo full-stack de remesas USD/GTQ con autenticación por roles, conversión con una tasa de referencia y un historial compartido entre remitente y beneficiario.
+
+## Prueba la demo
+
+Con [Docker y Docker Compose](https://www.docker.com/) instalados, ejecuta este
+comando desde la raíz del repositorio y abre [http://localhost:3000](http://localhost:3000).
+
+```bash
+docker compose up --build
+```
+
+1. Pulsa **Probar como Remitente** y envía una remesa a `receiver@sendapayments.com`.
+2. Cierra sesión, entra con **Probar como Beneficiario** y pulsa **Confirmar Recepción**.
+3. Vuelve al panel del remitente y verifica que la remesa figure como **Confirmado**.
+
+Al arrancar, el backend crea las cuentas demo si la tabla de usuarios está
+vacía. También puedes ingresar las credenciales manualmente.
+
+| Rol | Correo | Contraseña |
+| :--- | :--- | :--- |
+| Remitente | `sender@sendapayments.com` | `SendaPass123!` |
+| Beneficiario | `receiver@sendapayments.com` | `SendaPass123!` |
+
+La [documentación interactiva de la API](http://localhost:8000/docs) también
+queda disponible. Para personalizar el entorno, copia `.env.example` a `.env`.
+En un entorno con cuentas reales, usa una base propia y configura `DEMO_MODE=false`.
 
 ## Descripción del Proyecto
 
 **Senda Payments** resuelve la necesidad de coordinar de forma transparente el envío de remesas y pagos transfronterizos entre dos roles fundamentales:
-* **Emisor / Remitente:** Registra envíos en dólares estadounidenses (USD). La plataforma consulta automáticamente la tasa de cambio vigente (vía API Frankfurter con fallback resiliente) y calcula el valor equivalente en Quetzales guatemaltecos (GTQ). Además, cuenta con un panel analítico interactivo con gráficos de líneas para evaluar tendencias temporales.
+* **Emisor / Remitente:** Registra envíos en dólares estadounidenses (USD). La plataforma consulta la tasa de referencia y calcula el equivalente en quetzales guatemaltecos (GTQ). El panel muestra un gráfico de los movimientos.
 * **Receptor / Beneficiario:** Puede solicitar fondos indicando montos en GTQ y confirmar de forma explícita la recepción de transferencias enviadas, garantizando un ciclo cerrado y trazabilidad de cada operación.
 
 ---
@@ -27,45 +52,26 @@ Plataforma full-stack para la gestión, cálculo y trazabilidad de pagos y remes
 
 ### Roles de Usuario
 1. **Emisor (`emisor`)**:
-   * Envía dinero en USD (`amount_usd`).
-   * Consulta el historial paginado de transferencias y el total acumulado.
+   * Envía dinero en USD (`amount_usd`) al correo de un beneficiario registrado (`beneficiary_email`).
+   * Consulta el historial paginado de transferencias.
    * Alterna la visualización de la gráfica de transferencias entre USD y GTQ.
 2. **Receptor (`receptor`)**:
    * Registra solicitudes de dinero en GTQ (`amount_gtq`).
-   * Visualiza transferencias pendientes y confirma su recepción en un clic (`PATCH /transactions/{id}/confirm`).
+   * Visualiza los envíos dirigidos a su cuenta y confirma su recepción en un clic (`PATCH /transactions/{id}/confirm`). El remitente ve el mismo estado en su historial.
 
-### Conversión de Moneda Resiliente
-El servicio `exchange_service.py` consulta la API pública de **Frankfurter** (`USD -> GTQ`). En caso de interrupciones de red o fallas de conectividad externa, implementa una tasa de contingencia (*fallback*) para garantizar alta disponibilidad en todo momento.
+### Conversión de moneda
 
----
-
-## Inicio Rápido con Docker Compose (2 Pasos)
-
-### Requisitos Previos
-* [Docker](https://www.docker.com/) y Docker Compose instalados en tu sistema.
-
-### Paso 1: Configurar Variables de Entorno
-Copia el archivo de plantilla a `.env` en la raíz del proyecto:
-```bash
-cp .env.example .env
-```
-*(Los valores por defecto en `.env.example` están listos para funcionar inmediatamente en entornos de desarrollo local).*
-
-### Paso 2: Levantar los Contenedores
-Ejecuta el comando para construir y poner en marcha los servicios:
-```bash
-docker-compose up --build
-```
-
-Una vez levantados los servicios:
-* **Frontend Web:** [http://localhost:3000](http://localhost:3000)
-* **Backend API:** [http://localhost:8000](http://localhost:8000)
-* **Documentación Interactiva Swagger:** [http://localhost:8000/docs](http://localhost:8000/docs)
-* **Documentación ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
+El backend consulta la tasa de referencia USD/GTQ en [Frankfurter v2](https://frankfurter.dev/currencies/usd/gtq/).
+Si el proveedor no devuelve una tasa válida, la demo usa `7.75 GTQ` por dólar como
+valor de contingencia. Cada transacción guarda la tasa que se usó en el cálculo.
 
 ---
 
 ## Desarrollo Local (Sin Docker)
+
+El backend aplica las migraciones de Alembic al iniciar. Los volúmenes
+PostgreSQL de versiones anteriores se actualizan en el mismo lugar. Las remesas
+históricas sin beneficiario siguen disponibles en el historial de su autor.
 
 Si prefieres ejecutar los servicios directamente en tu entorno local:
 
@@ -109,9 +115,9 @@ npm start
 * `GET /api/v1/users/me` *(Protegido)* - Retorna los datos del perfil del usuario actualmente autenticado.
 
 ### Transacciones (`/api/v1/transactions`)
-* `POST /api/v1/transactions/` *(Protegido)* - Registrar un nuevo envío (`type: envio`, `amount_usd`) o solicitud (`type: solicitud`, `amount_gtq`).
-* `GET /api/v1/transactions/?page=1&page_size=10` *(Protegido)* - Listado paginado de transacciones del usuario.
-* `PATCH /api/v1/transactions/{transaction_id}/confirm` *(Protegido)* - Confirmación de recepción de fondos por parte del beneficiario.
+* `POST /api/v1/transactions/` *(Protegido)* - Registrar un envío (`type: envio`, `amount_usd`, `beneficiary_email`) o una solicitud (`type: solicitud`, `amount_gtq`).
+* `GET /api/v1/transactions/?page=1&page_size=10` *(Protegido)* - Listar las transacciones creadas por la cuenta o dirigidas a ella.
+* `PATCH /api/v1/transactions/{transaction_id}/confirm` *(Protegido)* - Confirmar la recepción de un envío como su beneficiario asignado.
 
 ---
 
@@ -163,4 +169,17 @@ senda-payments/
 
 ## Licencia
 
-Este proyecto está distribuido bajo la licencia MIT.
+Este proyecto está distribuido bajo la [licencia MIT](LICENSE).
+
+## Despliegue opcional en Render
+
+El Blueprint [`render.yaml`](render.yaml) configura un servicio web y una base
+PostgreSQL independiente. [`Dockerfile.demo`](Dockerfile.demo) sirve React y la API
+bajo el mismo dominio. Render genera la clave JWT e inyecta la conexión interna
+de PostgreSQL.
+
+En Render, crea un **Blueprint**, vincula este repositorio y selecciona
+`develop`. Las actualizaciones automáticas se publican cuando pasan los checks
+de CI. Las cuentas y el historial demo son compartidos, así que usa únicamente
+datos ficticios. La base gratuita expira a los 30 días.
+[Documentación de Render](https://render.com/docs/free#free-postgres)

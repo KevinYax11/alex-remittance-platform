@@ -1,25 +1,23 @@
-import httpx
 from datetime import datetime
+from math import isfinite
 
-FRANKFURTER_URL = "https://api.frankfurter.app"
+import httpx
+
+FRANKFURTER_RATE_URL = "https://api.frankfurter.dev/v2/rate/USD/GTQ"
+FALLBACK_RATE = 7.75
+
 
 async def get_exchange_rate(date: datetime | None = None) -> float:
-    async with httpx.AsyncClient() as client:
-        try:
-            if date:
-                date_str = date.strftime("%Y-%m-%d")
-                url = f"{FRANKFURTER_URL}/{date_str}"
-            else:
-                url = f"{FRANKFURTER_URL}/latest"
+    params = {"date": date.date().isoformat()} if date else None
 
-            response = await client.get(url, params={
-                "from": "USD",
-                "to": "GTQ"
-            })
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(FRANKFURTER_RATE_URL, params=params)
             response.raise_for_status()
-            data = response.json()
-            return data["rates"]["GTQ"]
+            rate = response.json()["rate"]
+        if type(rate) in (int, float) and isfinite(rate) and rate > 0:
+            return float(rate)
+    except (httpx.HTTPError, KeyError, OverflowError, TypeError, ValueError):
+        return FALLBACK_RATE
 
-        except httpx.HTTPError:
-            # Fallback rate si la API falla
-            return 7.75
+    return FALLBACK_RATE

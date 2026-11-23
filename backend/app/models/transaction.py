@@ -18,6 +18,7 @@ class Transaction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    beneficiary_id = Column(Integer, ForeignKey("users.id"), index=True)
     type = Column(Enum(TransactionType), nullable=False)
     status = Column(Enum(TransactionStatus), default=TransactionStatus.pendiente)
     amount_usd = Column(Float, nullable=False)
@@ -26,4 +27,4 @@ class Transaction(Base):
     note = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    user = relationship("User", back_populates="transactions")
+    user = relationship("User", back_populates="transactions", foreign_keys=[user_id])

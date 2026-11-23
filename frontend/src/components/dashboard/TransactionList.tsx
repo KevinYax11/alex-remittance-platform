@@ -128,7 +128,10 @@ const TransactionList = ({ transactions, onRefresh }: Props) => {
                 {t.status === "confirmado" ? "Confirmado" : "Pendiente"}
               </span>
 
-              {user?.role === "receptor" && t.status === "pendiente" && (
+              {user?.role === "receptor" &&
+                t.type === "envio" &&
+                t.beneficiary_id === user.user_id &&
+                t.status === "pendiente" && (
                 <button
                   onClick={() => handleConfirm(t.id)}
                   disabled={loading === t.id}

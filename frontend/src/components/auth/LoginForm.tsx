@@ -2,6 +2,11 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { loginApi } from "../../api/auth";
 
+const demoAccounts = [
+  { email: "sender@sendapayments.com", label: "Probar como Remitente" },
+  { email: "receiver@sendapayments.com", label: "Probar como Beneficiario" },
+];
+
 const LoginForm = () => {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
@@ -9,18 +14,19 @@ const LoginForm = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const signIn = async (signInEmail: string, signInPassword: string) => {
     setError("");
-
-    if (!email.trim() || !password) {
+    if (!signInEmail.trim() || !signInPassword) {
       setError("Por favor completa todos los campos.");
       return;
     }
 
     setLoading(true);
     try {
-      const user = await loginApi({ email: email.trim(), password });
+      const user = await loginApi({
+        email: signInEmail.trim(),
+        password: signInPassword,
+      });
       login(user);
     } catch (err: any) {
       const backendError =
@@ -32,6 +38,11 @@ const LoginForm = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    void signIn(email, password);
   };
 
   return (
@@ -143,6 +154,20 @@ const LoginForm = () => {
       >
         {loading ? "Iniciando sesión..." : "Entrar al Sistema"}
       </button>
+      {process.env.REACT_APP_DEMO_MODE === "true" && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "12px" }}>
+          {demoAccounts.map((account) => (
+            <button
+              key={account.email}
+              type="button"
+              disabled={loading}
+              onClick={() => void signIn(account.email, "SendaPass123!")}
+            >
+              {account.label}
+            </button>
+          ))}
+        </div>
+      )}
     </form>
   );
 };

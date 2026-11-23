@@ -9,6 +9,7 @@ interface Props {
 const TransactionForm = ({ onSuccess }: Props) => {
   const { user } = useAuth();
   const [amount, setAmount] = useState("");
+  const [beneficiaryEmail, setBeneficiaryEmail] = useState("");
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -31,9 +32,11 @@ const TransactionForm = ({ onSuccess }: Props) => {
         type: isEmisor ? "envio" : "solicitud",
         amount_usd: isEmisor ? parsedAmount : undefined,
         amount_gtq: !isEmisor ? parsedAmount : undefined,
+        beneficiary_email: isEmisor ? beneficiaryEmail.trim() : undefined,
         note: note.trim() || undefined,
       });
       setAmount("");
+      setBeneficiaryEmail("");
       setNote("");
       onSuccess();
     } catch (err: any) {
@@ -100,6 +103,20 @@ const TransactionForm = ({ onSuccess }: Props) => {
               }}
             />
           </div>
+
+          {isEmisor && (
+            <label style={{ flex: "2 1 240px" }}>
+              Correo del beneficiario
+              <input
+                type="email"
+                value={beneficiaryEmail}
+                onChange={(e) => setBeneficiaryEmail(e.target.value)}
+                required
+                disabled={loading}
+                style={{ display: "block", width: "100%", boxSizing: "border-box", padding: "9px 12px" }}
+              />
+            </label>
+          )}
 
           <div style={{ flex: "2 1 240px" }}>
             <input

@@ -8,6 +8,7 @@ export interface User {
 export interface Transaction {
   id: number;
   user_id: number;
+  beneficiary_id: number | null;
   type: "envio" | "solicitud";
   status: "pendiente" | "confirmado";
   amount_usd: number;

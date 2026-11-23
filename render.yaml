@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: senda-payments-demo
+    runtime: docker
+    plan: free
+    branch: develop
+    autoDeployTrigger: checksPass
+    dockerfilePath: ./Dockerfile.demo
+    healthCheckPath: /healthz
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: senda-payments-demo-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEMO_MODE
+        value: "true"
+
+databases:
+  - name: senda-payments-demo-db
+    plan: free
+    postgresMajorVersion: "15"
+    ipAllowList: []

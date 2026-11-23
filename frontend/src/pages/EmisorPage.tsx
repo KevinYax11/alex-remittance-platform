@@ -8,7 +8,7 @@ import TransactionList from "../components/dashboard/TransactionList";
 
 const EmisorPage = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +17,7 @@ const EmisorPage = () => {
     try {
       const data = await getTransactions(page);
       setTransactions(data.items);
-      setTotal(data.total);
+      setTotalPages(Math.ceil(data.total / data.page_size));
     } finally {
       setLoading(false);
     }
@@ -41,7 +41,7 @@ const EmisorPage = () => {
             Anterior
           </button>
           <span>Página {page}</span>
-          <button onClick={() => setPage((p) => p + 1)} disabled={transactions.length < 10}>
+          <button onClick={() => setPage((p) => p + 1)} disabled={loading || page >= totalPages}>
             Siguiente
           </button>
         </div>

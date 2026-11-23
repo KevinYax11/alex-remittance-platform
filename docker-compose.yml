@@ -29,6 +29,7 @@ services:
       SECRET_KEY: ${SECRET_KEY:-supersecretkey123}
       ALGORITHM: ${ALGORITHM:-HS256}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      DEMO_MODE: ${DEMO_MODE:-true}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -45,6 +46,7 @@ services:
     container_name: remittance_frontend
     environment:
       - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8000/api/v1}
+      - REACT_APP_DEMO_MODE=${DEMO_MODE:-true}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
