@@ -8,7 +8,7 @@ from app.core.security import decode_access_token
 from app.models.transaction import TransactionType
 from app.models.user import RoleEnum
 from app.schemas.transaction import TransactionCreate, TransactionResponse, TransactionListResponse
-from app.services.transaction_service import create_transaction, get_transactions, confirm_transaction
+from app.services.transaction_service import SelfDirectedTransaction, create_transaction, get_transactions, confirm_transaction
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 router = APIRouter()
@@ -36,11 +36,21 @@ async def create(
     if current_user["role"] not in (required_role, RoleEnum.ambos):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Operación no permitida.")
 
-    transaction = await create_transaction(db, int(current_user["sub"]), data)
+    try:
+        transaction = await create_transaction(db, int(current_user["sub"]), data)
+    except SelfDirectedTransaction:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ingresa el correo de otra cuenta. No puedes usar tu propio correo.",
+        ) from None
     if transaction is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No se encontró un beneficiario con ese correo.",
+            detail=(
+                "No se encontró un beneficiario con ese correo."
+                if data.type == TransactionType.envio
+                else "No encontramos una cuenta que pueda enviar remesas con ese correo."
+            ),
         )
     return transaction
 

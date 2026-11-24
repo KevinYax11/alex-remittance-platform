@@ -6,6 +6,7 @@ export interface CreateTransactionPayload {
   amount_usd?: number;
   amount_gtq?: number;
   beneficiary_email?: string;
+  requested_from_email?: string;
   note?: string;
 }
 

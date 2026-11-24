@@ -42,6 +42,7 @@ export default function TransactionList({ view, transactions, onRefresh }: Props
       <ul className="payments-transactions" aria-label="Transacciones">
         {transactions.map(transaction => {
           const isTransfer = transaction.type === "envio";
+          const receivedRequest = transaction.requested_from_id === user?.user_id;
           const isConfirmed = transaction.status === "confirmado";
           const canConfirm = view === "receptor" && isTransfer && !isConfirmed
             && transaction.beneficiary_id === user?.user_id;
@@ -54,10 +55,17 @@ export default function TransactionList({ view, transactions, onRefresh }: Props
                 </span>
                 <div>
                   <div className="payments-transaction-name">
-                    <strong>{isTransfer ? "Envío de remesa" : "Solicitud de dinero"}</strong>
+                    <strong>{isTransfer ? "Envío de remesa" : receivedRequest ? "Solicitud recibida" : "Solicitud enviada"}</strong>
                     <span>#{transaction.id}</span>
                   </div>
                   <time dateTime={transaction.created_at}>{dates.format(new Date(transaction.created_at))}</time>
+                  {!isTransfer && (
+                    <p className="payments-transaction-note">
+                      {receivedRequest ? `De: ${transaction.requester_email}`
+                        : transaction.requested_from_email ? `Para: ${transaction.requested_from_email}`
+                          : "Solicitud anterior sin destinatario"}
+                    </p>
+                  )}
                   {transaction.note && <p className="payments-transaction-note">{transaction.note}</p>}
                 </div>
               </div>

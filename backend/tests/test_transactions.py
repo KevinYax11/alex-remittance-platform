@@ -31,6 +31,8 @@ OTHER_EMAIL = "other@sendapayments.com"
         {"type": "solicitud", "amount_gtq": -10},
         {"type": "solicitud", "amount_gtq": float("inf")},
         {"type": "solicitud"},
+        {"type": "solicitud", "amount_gtq": 100},
+        {"type": "solicitud", "amount_gtq": 100, "requested_from_email": "invalid"},
     ],
 )
 def test_rejects_invalid_transaction_payload(payload):
@@ -112,6 +114,8 @@ def test_only_assigned_beneficiary_can_confirm_a_remittance(client):
     transfer = {"type": "envio", "amount_usd": 100, "beneficiary_email": BENEFICIARY_EMAIL}
     assert client.post(TRANSACTIONS, json=transfer, headers=beneficiary).status_code == 403
     invalid_beneficiary = {**transfer, "beneficiary_email": SENDER_EMAIL}
+    assert client.post(TRANSACTIONS, json=invalid_beneficiary, headers=sender).status_code == 400
+    invalid_beneficiary["beneficiary_email"] = "missing@sendapayments.com"
     assert client.post(TRANSACTIONS, json=invalid_beneficiary, headers=sender).status_code == 404
 
     response = client.post(TRANSACTIONS, json=transfer, headers=sender)
@@ -135,11 +139,18 @@ def test_only_assigned_beneficiary_can_confirm_a_remittance(client):
     assert list_transactions(client, sender)["items"] == [confirmed]
 
     response = client.post(
-        TRANSACTIONS, headers=beneficiary, json={"type": "solicitud", "amount_gtq": 77.5}
+        TRANSACTIONS, headers=beneficiary,
+        json={"type": "solicitud", "amount_gtq": 77.5, "requested_from_email": SENDER_EMAIL},
     )
     assert response.status_code == 201, response.text
     request = response.json()
     assert request["beneficiary_id"] is None
+    assert request["requested_from_id"] is not None
+    assert request["requester_email"] == BENEFICIARY_EMAIL
+    assert request["requested_from_email"] == SENDER_EMAIL
+    assert list_transactions(client, sender, view="emisor")["items"][0] == request
+    assert list_transactions(client, beneficiary, view="receptor")["items"][0] == request
+    assert list_transactions(client, other)["items"] == []
     assert client.patch(f"{TRANSACTIONS}{request['id']}/confirm", headers=beneficiary).status_code == 404
 
     history = list_transactions(client, beneficiary, page=2, page_size=1)
@@ -183,7 +194,7 @@ def test_registered_accounts_can_send_and_receive_with_the_same_session(client):
             json={"type": "envio", "amount_usd": 50, "beneficiary_email": email},
         )
 
-    assert send(alice, first_email).status_code == 404
+    assert send(alice, first_email).status_code == 400
     outgoing = send(alice, second_email)
     incoming = send(bob, first_email)
     assert outgoing.status_code == incoming.status_code == 201
@@ -199,6 +210,20 @@ def test_registered_accounts_can_send_and_receive_with_the_same_session(client):
     assert received.status_code == 200
     assert received.json()["status"] == "confirmado"
     assert list_transactions(client, bob, view="emisor")["items"][0]["status"] == "confirmado"
-    assert client.post(
-        TRANSACTIONS, headers=alice, json={"type": "solicitud", "amount_gtq": 100}
-    ).status_code == 201
+    def request_money(email):
+        return client.post(
+            TRANSACTIONS, headers=alice,
+            json={"type": "solicitud", "amount_gtq": 100, "requested_from_email": email},
+        )
+
+    assert request_money(first_email).status_code == 400
+    assert request_money("missing@sendapayments.com").status_code == 404
+    assert request_money(BENEFICIARY_EMAIL).status_code == 404
+    created_request = request_money(second_email)
+    assert created_request.status_code == 201, created_request.text
+    request = created_request.json()
+    assert list_transactions(client, alice, view="receptor")["items"][0] == request
+    assert list_transactions(client, bob, view="emisor")["items"][0] == request
+    assert list_transactions(client, alice, view="emisor")["total"] == 1
+    assert list_transactions(client, bob, view="receptor")["total"] == 1
+    assert client.patch(f"{TRANSACTIONS}{request['id']}/confirm", headers=bob).status_code == 404

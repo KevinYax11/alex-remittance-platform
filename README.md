@@ -56,7 +56,7 @@ En un entorno con cuentas reales, usa una base propia y configura `DEMO_MODE=fal
    * Consulta el historial paginado de transferencias.
    * Alterna la visualización de la gráfica de transferencias entre USD y GTQ.
 2. **Receptor (`receptor`)**:
-   * Registra solicitudes de dinero en GTQ (`amount_gtq`).
+   * Registra solicitudes de dinero en GTQ por correo. La cuenta destino ve la solicitud en **Enviar**.
    * Visualiza los envíos dirigidos a su cuenta y confirma su recepción en un clic (`PATCH /transactions/{id}/confirm`). El remitente ve el mismo estado en su historial.
 
 ### Conversión de moneda
@@ -115,8 +115,8 @@ npm start
 * `GET /api/v1/users/me` *(Protegido)* - Retorna los datos del perfil del usuario actualmente autenticado.
 
 ### Transacciones (`/api/v1/transactions`)
-* `POST /api/v1/transactions/` *(Protegido)* - Registrar un envío (`type: envio`, `amount_usd`, `beneficiary_email`) o una solicitud (`type: solicitud`, `amount_gtq`).
-* `GET /api/v1/transactions/?page=1&page_size=10` *(Protegido)* - Listar las transacciones creadas por la cuenta o dirigidas a ella. Admite `view=emisor` para envíos y `view=receptor` para recepciones y solicitudes.
+* `POST /api/v1/transactions/` *(Protegido)* - Registrar un envío (`type: envio`, `amount_usd`, `beneficiary_email`) o una solicitud (`type: solicitud`, `amount_gtq`, `requested_from_email`).
+* `GET /api/v1/transactions/?page=1&page_size=10` *(Protegido)* - Listar las transacciones creadas por la cuenta o dirigidas a ella. Admite `view=emisor` para envíos y solicitudes recibidas y `view=receptor` para recepciones y solicitudes enviadas.
 * `PATCH /api/v1/transactions/{transaction_id}/confirm` *(Protegido)* - Confirmar la recepción de un envío como su beneficiario asignado.
 
 ---
