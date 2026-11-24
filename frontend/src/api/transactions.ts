@@ -11,10 +11,12 @@ export interface CreateTransactionPayload {
 
 export const getTransactions = async (
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
+  signal?: AbortSignal
 ): Promise<TransactionListResponse> => {
   const response = await api.get<TransactionListResponse>("/transactions/", {
     params: { page, page_size: pageSize },
+    signal,
   });
   return response.data;
 };

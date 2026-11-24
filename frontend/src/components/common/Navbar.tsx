@@ -1,65 +1,34 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const Navbar = () => {
+export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  function handleLogout() {
     logout();
     navigate("/login");
-  };
-
-  const roleLabel = user?.role === "emisor" ? "Emisor (Remitente)" : "Receptor (Beneficiario)";
+  }
 
   return (
-    <header
-      style={{
-        backgroundColor: "#1a1a2e",
-        color: "#ffffff",
-        padding: "14px 24px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: "#ffffff" }}>
-          Senda Payments
-        </h2>
-      </div>
-
-      {user && (
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div style={{ textAlign: "right" }}>
-            <span style={{ display: "block", fontSize: "0.95rem", fontWeight: 500 }}>
-              {user.full_name}
-            </span>
-            <span style={{ display: "block", fontSize: "0.8rem", color: "#a0a0b0" }}>
-              {roleLabel}
-            </span>
-          </div>
-          <button
-            onClick={handleLogout}
-            style={{
-              backgroundColor: "#e94560",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "4px",
-              padding: "8px 14px",
-              cursor: "pointer",
-              fontSize: "0.85rem",
-              fontWeight: 500,
-              transition: "background-color 0.2s ease",
-            }}
-          >
-            Cerrar Sesión
-          </button>
+    <header className="payments-nav">
+      <div className="payments-wrap payments-nav-inner">
+        <div className="payments-brand">
+          <span className="payments-brand-mark" aria-hidden="true">↗</span>
+          <strong>Senda Payments</strong>
         </div>
-      )}
+        {user && (
+          <div className="payments-account">
+            <div className="payments-account-name">
+              <strong>{user.full_name}</strong>
+              <span>{user.role === "emisor" ? "Remitente" : "Beneficiario"}</span>
+            </div>
+            <button type="button" className="payments-button payments-logout" onClick={handleLogout}>
+              Cerrar sesión
+            </button>
+          </div>
+        )}
+      </div>
     </header>
   );
-};
-
-export default Navbar;
+}
