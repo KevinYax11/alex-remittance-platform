@@ -18,7 +18,7 @@ docker compose up --build
 3. Vuelve al panel del remitente y verifica que la remesa figure como **Confirmado**.
 
 Al arrancar, el backend crea las cuentas demo si la tabla de usuarios está
-vacía. También puedes ingresar las credenciales manualmente.
+vacía. También puedes ingresar las credenciales manualmente. Desde **Crear cuenta** puedes registrar tus propios usuarios de prueba. Cada cuenta nueva tiene las vistas **Enviar** y **Recibir** en una sola sesión.
 
 | Rol | Correo | Contraseña |
 | :--- | :--- | :--- |
@@ -56,8 +56,12 @@ En un entorno con cuentas reales, usa una base propia y configura `DEMO_MODE=fal
    * Consulta el historial paginado de transferencias.
    * Alterna la visualización de la gráfica de transferencias entre USD y GTQ.
 2. **Receptor (`receptor`)**:
-   * Registra solicitudes de dinero en GTQ (`amount_gtq`).
+   * Registra solicitudes de dinero en GTQ por correo. La cuenta destino ve la solicitud en **Enviar**.
    * Visualiza los envíos dirigidos a su cuenta y confirma su recepción en un clic (`PATCH /transactions/{id}/confirm`). El remitente ve el mismo estado en su historial.
+
+### Saldo simulado
+
+Cada cuenta nueva empieza con USD 1,000 y Q0. El envío debita USD en el momento en que se registra. Los quetzales quedan **por confirmar** para el beneficiario y pasan a **recibido y disponible** cuando confirma la recepción. Las solicitudes de fondos se registran sin modificar saldos. Si el saldo disponible no cubre un envío, la API devuelve HTTP 409 y conserva el historial. La cuenta de remitente de la demo puede recibir un crédito único de USD 1,000 si su historial anterior agotó el saldo al activar esta función.
 
 ### Conversión de moneda
 
@@ -108,15 +112,16 @@ npm start
 ## Catálogo de Endpoints REST
 
 ### Autenticación (`/api/v1/auth`)
-* `POST /api/v1/auth/register` - Registro de nuevos usuarios (`full_name`, `email`, `password`, `role`).
+* `POST /api/v1/auth/register` - Registro con `full_name`, `email`, `password` y `accept_terms: true`. Devuelve una sesión con acceso a ambas vistas.
 * `POST /api/v1/auth/login` - Autenticación con credenciales y generación de token JWT Bearer.
 
 ### Usuarios (`/api/v1/users`)
 * `GET /api/v1/users/me` *(Protegido)* - Retorna los datos del perfil del usuario actualmente autenticado.
+* `GET /api/v1/users/me/wallet` *(Protegido)* - Devuelve los saldos disponibles en USD y GTQ, y el importe en GTQ pendiente de confirmación.
 
 ### Transacciones (`/api/v1/transactions`)
-* `POST /api/v1/transactions/` *(Protegido)* - Registrar un envío (`type: envio`, `amount_usd`, `beneficiary_email`) o una solicitud (`type: solicitud`, `amount_gtq`).
-* `GET /api/v1/transactions/?page=1&page_size=10` *(Protegido)* - Listar las transacciones creadas por la cuenta o dirigidas a ella.
+* `POST /api/v1/transactions/` *(Protegido)* - Registrar un envío (`type: envio`, `amount_usd`, `beneficiary_email`) o una solicitud (`type: solicitud`, `amount_gtq`, `requested_from_email`).
+* `GET /api/v1/transactions/?page=1&page_size=10` *(Protegido)* - Listar las transacciones creadas por la cuenta o dirigidas a ella. Admite `view=emisor` para envíos y solicitudes recibidas y `view=receptor` para recepciones y solicitudes enviadas.
 * `PATCH /api/v1/transactions/{transaction_id}/confirm` *(Protegido)* - Confirmar la recepción de un envío como su beneficiario asignado.
 
 ---

@@ -1,5 +1,7 @@
 import asyncio
 import os
+from concurrent.futures import ThreadPoolExecutor
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -31,6 +33,8 @@ OTHER_EMAIL = "other@sendapayments.com"
         {"type": "solicitud", "amount_gtq": -10},
         {"type": "solicitud", "amount_gtq": float("inf")},
         {"type": "solicitud"},
+        {"type": "solicitud", "amount_gtq": 100},
+        {"type": "solicitud", "amount_gtq": 100, "requested_from_email": "invalid"},
     ],
 )
 def test_rejects_invalid_transaction_payload(payload):
@@ -103,7 +107,7 @@ def test_only_assigned_beneficiary_can_confirm_a_remittance(client):
             "email": OTHER_EMAIL,
             "password": DEMO_PASSWORD,
             "full_name": "Other beneficiary",
-            "role": "receptor",
+            "accept_terms": True,
         },
     )
     assert response.status_code == 201, response.text
@@ -112,6 +116,8 @@ def test_only_assigned_beneficiary_can_confirm_a_remittance(client):
     transfer = {"type": "envio", "amount_usd": 100, "beneficiary_email": BENEFICIARY_EMAIL}
     assert client.post(TRANSACTIONS, json=transfer, headers=beneficiary).status_code == 403
     invalid_beneficiary = {**transfer, "beneficiary_email": SENDER_EMAIL}
+    assert client.post(TRANSACTIONS, json=invalid_beneficiary, headers=sender).status_code == 400
+    invalid_beneficiary["beneficiary_email"] = "missing@sendapayments.com"
     assert client.post(TRANSACTIONS, json=invalid_beneficiary, headers=sender).status_code == 404
 
     response = client.post(TRANSACTIONS, json=transfer, headers=sender)
@@ -135,13 +141,139 @@ def test_only_assigned_beneficiary_can_confirm_a_remittance(client):
     assert list_transactions(client, sender)["items"] == [confirmed]
 
     response = client.post(
-        TRANSACTIONS, headers=beneficiary, json={"type": "solicitud", "amount_gtq": 77.5}
+        TRANSACTIONS, headers=beneficiary,
+        json={"type": "solicitud", "amount_gtq": 77.5, "requested_from_email": SENDER_EMAIL},
     )
     assert response.status_code == 201, response.text
     request = response.json()
     assert request["beneficiary_id"] is None
+    assert request["requested_from_id"] is not None
+    assert request["requester_email"] == BENEFICIARY_EMAIL
+    assert request["requested_from_email"] == SENDER_EMAIL
+    assert list_transactions(client, sender, view="emisor")["items"][0] == request
+    assert list_transactions(client, beneficiary, view="receptor")["items"][0] == request
+    assert list_transactions(client, other)["items"] == []
     assert client.patch(f"{TRANSACTIONS}{request['id']}/confirm", headers=beneficiary).status_code == 404
 
     history = list_transactions(client, beneficiary, page=2, page_size=1)
     assert history["total"] == 2
     assert history["items"] == [confirmed]
+
+
+def test_registered_accounts_can_send_and_receive_with_the_same_session(client):
+    def register(email, **overrides):
+        return client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": email,
+                "password": DEMO_PASSWORD,
+                "full_name": "Cuenta de prueba",
+                "accept_terms": True,
+                **overrides,
+            },
+        )
+
+    assert register("no-consent@sendapayments.com", accept_terms=False).status_code == 422
+    assert register("no-role@sendapayments.com", role="emisor").status_code == 422
+
+    first_email = "full-first@sendapayments.com"
+    second_email = "full-second@sendapayments.com"
+    first, second = register(first_email), register(second_email)
+    for account in (first, second):
+        assert account.status_code == 201, account.text
+        assert account.json()["role"] == "ambos"
+    assert register(first_email).status_code == 409
+
+    def authorization(account):
+        return {"Authorization": f"Bearer {account.json()['access_token']}"}
+
+    alice, bob = authorization(first), authorization(second)
+
+    def send(headers, email):
+        return client.post(
+            TRANSACTIONS,
+            headers=headers,
+            json={"type": "envio", "amount_usd": 50, "beneficiary_email": email},
+        )
+
+    assert send(alice, first_email).status_code == 400
+    outgoing = send(alice, second_email)
+    incoming = send(bob, first_email)
+    assert outgoing.status_code == incoming.status_code == 201
+    outgoing_id = outgoing.json()["id"]
+    incoming_id = incoming.json()["id"]
+    assert list_transactions(client, alice, view="emisor")["items"][0]["id"] == outgoing_id
+    assert list_transactions(client, alice, view="receptor")["items"][0]["id"] == incoming_id
+    assert list_transactions(client, bob, view="emisor")["items"][0]["id"] == incoming_id
+    assert list_transactions(client, bob, view="receptor")["items"][0]["id"] == outgoing_id
+    assert client.patch(f"{TRANSACTIONS}{outgoing_id}/confirm", headers=alice).status_code == 404
+
+    received = client.patch(f"{TRANSACTIONS}{incoming_id}/confirm", headers=alice)
+    assert received.status_code == 200
+    assert received.json()["status"] == "confirmado"
+    assert list_transactions(client, bob, view="emisor")["items"][0]["status"] == "confirmado"
+    def request_money(email):
+        return client.post(
+            TRANSACTIONS, headers=alice,
+            json={"type": "solicitud", "amount_gtq": 100, "requested_from_email": email},
+        )
+
+    assert request_money(first_email).status_code == 400
+    assert request_money("missing@sendapayments.com").status_code == 404
+    assert request_money(BENEFICIARY_EMAIL).status_code == 404
+    created_request = request_money(second_email)
+    assert created_request.status_code == 201, created_request.text
+    request = created_request.json()
+    assert list_transactions(client, alice, view="receptor")["items"][0] == request
+    assert list_transactions(client, bob, view="emisor")["items"][0] == request
+    assert list_transactions(client, alice, view="emisor")["total"] == 1
+    assert list_transactions(client, bob, view="receptor")["total"] == 1
+    assert client.patch(f"{TRANSACTIONS}{request['id']}/confirm", headers=bob).status_code == 404
+
+
+def test_wallet_prevents_concurrent_overspending_and_credits_a_remittance_only_once(client):
+    sender = login(client, SENDER_EMAIL)
+    beneficiary = login(client, BENEFICIARY_EMAIL)
+
+    def wallet(headers):
+        response = client.get("/api/v1/users/me/wallet", headers=headers)
+        assert response.status_code == 200, response.text
+        return {key: Decimal(value) for key, value in response.json().items()}
+
+    assert wallet(sender)["available_usd"] == Decimal("1000")
+    assert wallet(beneficiary)["available_gtq"] == 0
+
+    def send(_):
+        return client.post(
+            TRANSACTIONS,
+            headers=sender,
+            json={"type": "envio", "amount_usd": 700, "beneficiary_email": BENEFICIARY_EMAIL},
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        sends = list(pool.map(send, range(2)))
+
+    assert sorted(response.status_code for response in sends) == [201, 409]
+    transfer = next(response.json() for response in sends if response.status_code == 201)
+    assert list_transactions(client, sender)["total"] == 1
+    assert wallet(sender)["available_usd"] == Decimal("300")
+    assert wallet(beneficiary)["available_gtq"] == 0
+    assert wallet(beneficiary)["pending_gtq"] == Decimal("5425")
+
+    confirm_url = f"{TRANSACTIONS}{transfer['id']}/confirm"
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        confirmations = list(pool.map(lambda _: client.patch(confirm_url, headers=beneficiary), range(2)))
+
+    assert [response.status_code for response in confirmations] == [200, 200]
+    assert all(response.json()["status"] == "confirmado" for response in confirmations)
+    assert wallet(beneficiary)["available_gtq"] == Decimal("5425")
+    assert wallet(beneficiary)["pending_gtq"] == 0
+
+    before = wallet(beneficiary)
+    response = client.post(
+        TRANSACTIONS, headers=beneficiary,
+        json={"type": "solicitud", "amount_gtq": 100, "requested_from_email": SENDER_EMAIL},
+    )
+    assert response.status_code == 201, response.text
+    assert wallet(beneficiary) == before
+    assert wallet(sender)["available_usd"] == Decimal("300")

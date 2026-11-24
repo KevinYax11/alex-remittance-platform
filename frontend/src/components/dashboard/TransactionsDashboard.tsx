@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
-import { getTransactions } from "../../api/transactions";
-import { TransactionListResponse } from "../../types";
+import { getTransactions, getWallet } from "../../api/transactions";
+import { DashboardRole, TransactionListResponse, WalletBalance } from "../../types";
 import Navbar from "../common/Navbar";
 import DashboardPagination from "./DashboardPagination";
 import TransactionChart from "./TransactionChart";
 import TransactionForm from "./TransactionForm";
 import TransactionList from "./TransactionList";
+import WalletSummary from "./WalletSummary";
 import "./payments-dashboard.css";
 
 interface Props {
-  role: "emisor" | "receptor";
+  role: DashboardRole;
 }
 
 export default function TransactionsDashboard({ role }: Props) {
@@ -17,6 +18,7 @@ export default function TransactionsDashboard({ role }: Props) {
   const [page, setPage] = useState(1);
   const [requestVersion, setRequestVersion] = useState(0);
   const [result, setResult] = useState<TransactionListResponse>();
+  const [wallet, setWallet] = useState<WalletBalance>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -42,7 +44,10 @@ export default function TransactionsDashboard({ role }: Props) {
     const controller = new AbortController();
     async function load() {
       try {
-        const data = await getTransactions(page, 10, controller.signal);
+        const [data, balance] = await Promise.all([
+          getTransactions(page, 10, controller.signal, role),
+          getWallet(controller.signal),
+        ]);
         if (controller.signal.aborted) return;
         const lastPage = Math.max(1, Math.ceil(data.total / data.page_size));
         if (page > lastPage) {
@@ -50,6 +55,7 @@ export default function TransactionsDashboard({ role }: Props) {
           return;
         }
         setResult(data);
+        setWallet(balance);
         setLoading(false);
       } catch {
         if (controller.signal.aborted) return;
@@ -60,7 +66,7 @@ export default function TransactionsDashboard({ role }: Props) {
 
     void load();
     return () => controller.abort();
-  }, [page, requestVersion]);
+  }, [page, requestVersion, role]);
 
   const current = result?.page === page ? result : undefined;
 
@@ -80,29 +86,29 @@ export default function TransactionsDashboard({ role }: Props) {
           </span>
         </header>
 
-        <div className={isSender ? "payments-workspace payments-workspace-sender" : "payments-workspace"}>
-          <TransactionForm onSuccess={handleCreated} />
-          {isSender && (
-            <section className="payments-panel payments-chart" aria-labelledby="payments-chart-title">
-              <div className="payments-panel-heading">
-                <div>
-                  <h2 id="payments-chart-title">Tendencia de envíos</h2>
-                  <p>Movimientos de la página actual</p>
-                </div>
-              </div>
-              <div hidden={!current}>
-                <TransactionChart transactions={current?.items ?? []} />
-              </div>
-              {!current && <p className="payments-empty">{error ? "Gráfico no disponible." : "Cargando gráfico…"}</p>}
-            </section>
-          )}
+        <WalletSummary balance={wallet} />
+
+        <div className="payments-workspace">
+          <TransactionForm view={role} onSuccess={handleCreated} />
+          <section className="payments-panel payments-chart" aria-labelledby="payments-chart-title">
+            <div className="payments-panel-heading">
+              <h2 id="payments-chart-title">{isSender ? "Tendencia de envíos" : "Remesas recibidas"}</h2>
+              <p>{isSender ? "Envíos de la página actual" : "Recepciones confirmadas de la página actual"}</p>
+            </div>
+            <div hidden={!current}>
+              <TransactionChart view={role} transactions={current?.items.filter(item =>
+                item.type === "envio" && (isSender || item.status === "confirmado")
+              ) ?? []} />
+            </div>
+            {!current && <p className="payments-empty">{error ? "Gráfico no disponible." : "Cargando gráfico…"}</p>}
+          </section>
         </div>
 
         <section className="payments-panel payments-history" aria-labelledby="payments-history-title">
           <header className="payments-panel-heading payments-history-heading">
             <div>
               <h2 id="payments-history-title">Historial de transacciones</h2>
-              <p>{isSender ? "Consulta los importes y el estado de cada remesa."
+              <p>{isSender ? "Consulta tus envíos y las solicitudes dirigidas a tu cuenta."
                 : "Consulta tus solicitudes y confirma los envíos que recibas."}</p>
             </div>
           </header>
@@ -113,7 +119,7 @@ export default function TransactionsDashboard({ role }: Props) {
             </div>
           )}
           <div aria-busy={loading}>
-            {current && <TransactionList transactions={current.items} onRefresh={refresh} />}
+            {current && <TransactionList view={role} transactions={current.items} onRefresh={refresh} />}
           </div>
           {result && (
             <DashboardPagination page={page} pageSize={result.page_size} total={result.total} onPageChange={goTo} />

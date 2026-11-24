@@ -176,3 +176,50 @@
 @media (max-width: 350px) {
   .payments-demo-options { grid-template-columns: minmax(0, 1fr); }
 }
+
+.payments-register-switch {
+  margin: 22px 0 0;
+  color: var(--login-muted);
+  font-size: .87rem;
+}
+
+.payments-register-switch a {
+  color: var(--login-accent);
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.payments-register-hint,
+.payments-register-terms {
+  color: var(--login-muted);
+  font-size: .82rem;
+}
+
+.payments-register-terms {
+  border-top: 1px solid var(--login-border);
+  padding-top: 12px;
+  line-height: 1.5;
+}
+
+.payments-register-terms summary {
+  color: var(--login-accent);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.payments-register-terms p { margin: 8px 0 0; }
+.payments-register-consent {
+  display: flex;
+  align-items: start;
+  gap: 9px;
+  font-size: .86rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.payments-register-consent input {
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: var(--login-accent);
+}

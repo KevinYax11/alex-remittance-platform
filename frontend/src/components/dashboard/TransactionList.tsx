@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { confirmTransaction } from "../../api/transactions";
 import { useAuth } from "../../context/AuthContext";
-import { Transaction } from "../../types";
+import { DashboardRole, Transaction } from "../../types";
 
 interface Props {
+  view: DashboardRole;
   transactions: Transaction[];
   onRefresh: () => void;
 }
@@ -12,7 +13,7 @@ const dollars = new Intl.NumberFormat("en-US", { style: "currency", currency: "U
 const decimals = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const dates = new Intl.DateTimeFormat("es-GT", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Guatemala" });
 
-export default function TransactionList({ transactions, onRefresh }: Props) {
+export default function TransactionList({ view, transactions, onRefresh }: Props) {
   const { user } = useAuth();
   const [confirming, setConfirming] = useState<number>();
   const [actionError, setActionError] = useState("");
@@ -41,9 +42,10 @@ export default function TransactionList({ transactions, onRefresh }: Props) {
       <ul className="payments-transactions" aria-label="Transacciones">
         {transactions.map(transaction => {
           const isTransfer = transaction.type === "envio";
+          const receivedRequest = transaction.requested_from_id === user?.user_id;
           const isConfirmed = transaction.status === "confirmado";
-          const canConfirm = user?.role === "receptor" && isTransfer && !isConfirmed
-            && transaction.beneficiary_id === user.user_id;
+          const canConfirm = view === "receptor" && isTransfer && !isConfirmed
+            && transaction.beneficiary_id === user?.user_id;
 
           return (
             <li key={transaction.id} className="payments-transaction">
@@ -53,10 +55,17 @@ export default function TransactionList({ transactions, onRefresh }: Props) {
                 </span>
                 <div>
                   <div className="payments-transaction-name">
-                    <strong>{isTransfer ? "Envío de remesa" : "Solicitud de dinero"}</strong>
+                    <strong>{isTransfer ? "Envío de remesa" : receivedRequest ? "Solicitud recibida" : "Solicitud enviada"}</strong>
                     <span>#{transaction.id}</span>
                   </div>
                   <time dateTime={transaction.created_at}>{dates.format(new Date(transaction.created_at))}</time>
+                  {!isTransfer && (
+                    <p className="payments-transaction-note">
+                      {receivedRequest ? `De: ${transaction.requester_email}`
+                        : transaction.requested_from_email ? `Para: ${transaction.requested_from_email}`
+                          : "Solicitud anterior sin destinatario"}
+                    </p>
+                  )}
                   {transaction.note && <p className="payments-transaction-note">{transaction.note}</p>}
                 </div>
               </div>

@@ -10,7 +10,7 @@ interface RegisterData {
   full_name: string;
   email: string;
   password: string;
-  role: "emisor" | "receptor";
+  accept_terms: boolean;
 }
 
 export const loginApi = async (credentials: LoginCredentials): Promise<User> => {
@@ -18,6 +18,7 @@ export const loginApi = async (credentials: LoginCredentials): Promise<User> => 
   return response.data;
 };
 
-export const registerApi = async (data: RegisterData): Promise<void> => {
-  await api.post("/auth/register", data);
+export const registerApi = async (data: RegisterData): Promise<User> => {
+  const response = await api.post<User>("/auth/register", data);
+  return response.data;
 };

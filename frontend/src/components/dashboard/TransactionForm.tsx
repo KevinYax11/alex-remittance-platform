@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { createTransaction } from "../../api/transactions";
-import { useAuth } from "../../context/AuthContext";
+import { DashboardRole } from "../../types";
 
 interface Props {
+  view: DashboardRole;
   onSuccess: () => void;
 }
 
-export default function TransactionForm({ onSuccess }: Props) {
-  const { user } = useAuth();
+export default function TransactionForm({ view, onSuccess }: Props) {
   const [amount, setAmount] = useState("");
-  const [beneficiaryEmail, setBeneficiaryEmail] = useState("");
+  const [counterpartyEmail, setCounterpartyEmail] = useState("");
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: "error" | "success"; message: string }>();
-  const isSender = user?.role === "emisor";
+  const isSender = view === "emisor";
   const currency = isSender ? "USD" : "GTQ";
 
   async function handleSubmit(event: React.FormEvent) {
@@ -32,15 +32,17 @@ export default function TransactionForm({ onSuccess }: Props) {
         type: isSender ? "envio" : "solicitud",
         amount_usd: isSender ? parsedAmount : undefined,
         amount_gtq: !isSender ? parsedAmount : undefined,
-        beneficiary_email: isSender ? beneficiaryEmail.trim() : undefined,
+        beneficiary_email: isSender ? counterpartyEmail.trim() : undefined,
+        requested_from_email: isSender ? undefined : counterpartyEmail.trim(),
         note: note.trim() || undefined,
       });
       setAmount("");
-      setBeneficiaryEmail("");
+      setCounterpartyEmail("");
       setNote("");
       setFeedback({
         kind: "success",
-        message: `${isSender ? "Remesa" : "Solicitud"} #${transaction.id} registrada.`,
+        message: isSender ? `Remesa #${transaction.id} registrada.`
+          : `Solicitud #${transaction.id} enviada a ${transaction.requested_from_email}.`,
       });
       onSuccess();
     } catch (error: any) {
@@ -59,7 +61,7 @@ export default function TransactionForm({ onSuccess }: Props) {
       <header className="payments-panel-heading">
         <div>
           <h2 id="payments-form-title">{isSender ? "Nueva remesa" : "Solicitar fondos"}</h2>
-          <p>{isSender ? "Selecciona a quién enviar la remesa." : "Registra una solicitud en quetzales."}</p>
+          <p>{isSender ? "Selecciona a quién enviar la remesa." : "Indica cuánto necesitas y a qué cuenta enviarás la solicitud."}</p>
         </div>
       </header>
       <form className="payments-form" onSubmit={handleSubmit}>
@@ -73,13 +75,11 @@ export default function TransactionForm({ onSuccess }: Props) {
             <span aria-hidden="true">{currency}</span>
           </span>
         </label>
-        {isSender && (
-          <label className="payments-field">
-            <span>Correo del beneficiario</span>
-            <input type="email" value={beneficiaryEmail} onChange={event => setBeneficiaryEmail(event.target.value)}
-              placeholder="correo@ejemplo.com" required disabled={loading} />
-          </label>
-        )}
+        <label className="payments-field">
+          <span>{isSender ? "Correo del beneficiario" : "Correo de quien enviará el dinero"}</span>
+          <input type="email" value={counterpartyEmail} onChange={event => setCounterpartyEmail(event.target.value)}
+            placeholder="correo@ejemplo.com" required disabled={loading} />
+        </label>
         <label className="payments-field">
           <span>Nota <small>Opcional</small></span>
           <input type="text" placeholder="Motivo de la operación" value={note}
