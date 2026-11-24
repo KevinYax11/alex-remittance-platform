@@ -103,7 +103,7 @@ def test_only_assigned_beneficiary_can_confirm_a_remittance(client):
             "email": OTHER_EMAIL,
             "password": DEMO_PASSWORD,
             "full_name": "Other beneficiary",
-            "role": "receptor",
+            "accept_terms": True,
         },
     )
     assert response.status_code == 201, response.text
@@ -145,3 +145,60 @@ def test_only_assigned_beneficiary_can_confirm_a_remittance(client):
     history = list_transactions(client, beneficiary, page=2, page_size=1)
     assert history["total"] == 2
     assert history["items"] == [confirmed]
+
+
+def test_registered_accounts_can_send_and_receive_with_the_same_session(client):
+    def register(email, **overrides):
+        return client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": email,
+                "password": DEMO_PASSWORD,
+                "full_name": "Cuenta de prueba",
+                "accept_terms": True,
+                **overrides,
+            },
+        )
+
+    assert register("no-consent@sendapayments.com", accept_terms=False).status_code == 422
+    assert register("no-role@sendapayments.com", role="emisor").status_code == 422
+
+    first_email = "full-first@sendapayments.com"
+    second_email = "full-second@sendapayments.com"
+    first, second = register(first_email), register(second_email)
+    for account in (first, second):
+        assert account.status_code == 201, account.text
+        assert account.json()["role"] == "ambos"
+    assert register(first_email).status_code == 409
+
+    def authorization(account):
+        return {"Authorization": f"Bearer {account.json()['access_token']}"}
+
+    alice, bob = authorization(first), authorization(second)
+
+    def send(headers, email):
+        return client.post(
+            TRANSACTIONS,
+            headers=headers,
+            json={"type": "envio", "amount_usd": 50, "beneficiary_email": email},
+        )
+
+    assert send(alice, first_email).status_code == 404
+    outgoing = send(alice, second_email)
+    incoming = send(bob, first_email)
+    assert outgoing.status_code == incoming.status_code == 201
+    outgoing_id = outgoing.json()["id"]
+    incoming_id = incoming.json()["id"]
+    assert list_transactions(client, alice, view="emisor")["items"][0]["id"] == outgoing_id
+    assert list_transactions(client, alice, view="receptor")["items"][0]["id"] == incoming_id
+    assert list_transactions(client, bob, view="emisor")["items"][0]["id"] == incoming_id
+    assert list_transactions(client, bob, view="receptor")["items"][0]["id"] == outgoing_id
+    assert client.patch(f"{TRANSACTIONS}{outgoing_id}/confirm", headers=alice).status_code == 404
+
+    received = client.patch(f"{TRANSACTIONS}{incoming_id}/confirm", headers=alice)
+    assert received.status_code == 200
+    assert received.json()["status"] == "confirmado"
+    assert list_transactions(client, bob, view="emisor")["items"][0]["status"] == "confirmado"
+    assert client.post(
+        TRANSACTIONS, headers=alice, json={"type": "solicitud", "amount_gtq": 100}
+    ).status_code == 201

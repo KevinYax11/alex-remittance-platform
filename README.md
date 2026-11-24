@@ -18,7 +18,7 @@ docker compose up --build
 3. Vuelve al panel del remitente y verifica que la remesa figure como **Confirmado**.
 
 Al arrancar, el backend crea las cuentas demo si la tabla de usuarios está
-vacía. También puedes ingresar las credenciales manualmente.
+vacía. También puedes ingresar las credenciales manualmente. Desde **Crear cuenta** puedes registrar tus propios usuarios de prueba. Cada cuenta nueva tiene las vistas **Enviar** y **Recibir** en una sola sesión.
 
 | Rol | Correo | Contraseña |
 | :--- | :--- | :--- |
@@ -108,7 +108,7 @@ npm start
 ## Catálogo de Endpoints REST
 
 ### Autenticación (`/api/v1/auth`)
-* `POST /api/v1/auth/register` - Registro de nuevos usuarios (`full_name`, `email`, `password`, `role`).
+* `POST /api/v1/auth/register` - Registro con `full_name`, `email`, `password` y `accept_terms: true`. Devuelve una sesión con acceso a ambas vistas.
 * `POST /api/v1/auth/login` - Autenticación con credenciales y generación de token JWT Bearer.
 
 ### Usuarios (`/api/v1/users`)
@@ -116,7 +116,7 @@ npm start
 
 ### Transacciones (`/api/v1/transactions`)
 * `POST /api/v1/transactions/` *(Protegido)* - Registrar un envío (`type: envio`, `amount_usd`, `beneficiary_email`) o una solicitud (`type: solicitud`, `amount_gtq`).
-* `GET /api/v1/transactions/?page=1&page_size=10` *(Protegido)* - Listar las transacciones creadas por la cuenta o dirigidas a ella.
+* `GET /api/v1/transactions/?page=1&page_size=10` *(Protegido)* - Listar las transacciones creadas por la cuenta o dirigidas a ella. Admite `view=emisor` para envíos y `view=receptor` para recepciones y solicitudes.
 * `PATCH /api/v1/transactions/{transaction_id}/confirm` *(Protegido)* - Confirmar la recepción de un envío como su beneficiario asignado.
 
 ---

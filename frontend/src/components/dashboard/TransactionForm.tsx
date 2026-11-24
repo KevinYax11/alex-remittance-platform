@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { createTransaction } from "../../api/transactions";
-import { useAuth } from "../../context/AuthContext";
+import { DashboardRole } from "../../types";
 
 interface Props {
+  view: DashboardRole;
   onSuccess: () => void;
 }
 
-export default function TransactionForm({ onSuccess }: Props) {
-  const { user } = useAuth();
+export default function TransactionForm({ view, onSuccess }: Props) {
   const [amount, setAmount] = useState("");
   const [beneficiaryEmail, setBeneficiaryEmail] = useState("");
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: "error" | "success"; message: string }>();
-  const isSender = user?.role === "emisor";
+  const isSender = view === "emisor";
   const currency = isSender ? "USD" : "GTQ";
 
   async function handleSubmit(event: React.FormEvent) {
