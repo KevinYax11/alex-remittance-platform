@@ -1,7 +1,9 @@
+export type DashboardRole = "emisor" | "receptor";
+
 export interface User {
   user_id: number;
   full_name: string;
-  role: "emisor" | "receptor";
+  role: DashboardRole | "ambos";
   access_token: string;
 }
 

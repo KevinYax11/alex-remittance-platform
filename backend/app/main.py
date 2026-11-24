@@ -57,6 +57,7 @@ else:
 
     @app.get("/", include_in_schema=False)
     @app.get("/login", include_in_schema=False)
+    @app.get("/registro", include_in_schema=False)
     @app.get("/dashboard/emisor", include_in_schema=False)
     @app.get("/dashboard/receptor", include_in_schema=False)
     async def frontend_page():

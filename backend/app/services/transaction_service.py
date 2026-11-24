@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func, or_
+from sqlalchemy import and_, func, or_
 
 from app.models.transaction import Transaction, TransactionType, TransactionStatus
 from app.models.user import RoleEnum, User
@@ -14,7 +14,9 @@ async def create_transaction(
     if data.type == TransactionType.envio:
         beneficiary_id = await db.scalar(
             select(User.id).where(
-                User.email == data.beneficiary_email, User.role == RoleEnum.receptor
+                User.email == data.beneficiary_email,
+                User.role.in_((RoleEnum.receptor, RoleEnum.ambos)),
+                User.id != user_id,
             )
         )
         if beneficiary_id is None:
@@ -43,10 +45,19 @@ async def create_transaction(
     await db.refresh(transaction)
     return transaction
 
-async def get_transactions(db: AsyncSession, user_id: int, page: int = 1, page_size: int = 10):
+async def get_transactions(
+    db: AsyncSession, user_id: int, page: int = 1, page_size: int = 10, view: str | None = None
+):
     offset = (page - 1) * page_size
+    owned = Transaction.user_id == user_id
+    received = Transaction.beneficiary_id == user_id
 
-    participant = or_(Transaction.user_id == user_id, Transaction.beneficiary_id == user_id)
+    if view == "emisor":
+        participant = and_(owned, Transaction.type == TransactionType.envio)
+    elif view == "receptor":
+        participant = or_(received, and_(owned, Transaction.type == TransactionType.solicitud))
+    else:
+        participant = or_(owned, received)
     total_result = await db.execute(
         select(func.count()).select_from(Transaction).where(participant)
     )

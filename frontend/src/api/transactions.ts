@@ -1,5 +1,5 @@
 import api from "./axios";
-import { Transaction, TransactionListResponse } from "../types";
+import { DashboardRole, Transaction, TransactionListResponse } from "../types";
 
 export interface CreateTransactionPayload {
   type: "envio" | "solicitud";
@@ -12,10 +12,11 @@ export interface CreateTransactionPayload {
 export const getTransactions = async (
   page: number = 1,
   pageSize: number = 10,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  view?: DashboardRole
 ): Promise<TransactionListResponse> => {
   const response = await api.get<TransactionListResponse>("/transactions/", {
-    params: { page, page_size: pageSize },
+    params: { page, page_size: pageSize, view },
     signal,
   });
   return response.data;

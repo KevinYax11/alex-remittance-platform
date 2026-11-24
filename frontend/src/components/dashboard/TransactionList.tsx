@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { confirmTransaction } from "../../api/transactions";
 import { useAuth } from "../../context/AuthContext";
-import { Transaction } from "../../types";
+import { DashboardRole, Transaction } from "../../types";
 
 interface Props {
+  view: DashboardRole;
   transactions: Transaction[];
   onRefresh: () => void;
 }
@@ -12,7 +13,7 @@ const dollars = new Intl.NumberFormat("en-US", { style: "currency", currency: "U
 const decimals = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const dates = new Intl.DateTimeFormat("es-GT", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Guatemala" });
 
-export default function TransactionList({ transactions, onRefresh }: Props) {
+export default function TransactionList({ view, transactions, onRefresh }: Props) {
   const { user } = useAuth();
   const [confirming, setConfirming] = useState<number>();
   const [actionError, setActionError] = useState("");
@@ -42,8 +43,8 @@ export default function TransactionList({ transactions, onRefresh }: Props) {
         {transactions.map(transaction => {
           const isTransfer = transaction.type === "envio";
           const isConfirmed = transaction.status === "confirmado";
-          const canConfirm = user?.role === "receptor" && isTransfer && !isConfirmed
-            && transaction.beneficiary_id === user.user_id;
+          const canConfirm = view === "receptor" && isTransfer && !isConfirmed
+            && transaction.beneficiary_id === user?.user_id;
 
           return (
             <li key={transaction.id} className="payments-transaction">

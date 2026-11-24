@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getTransactions } from "../../api/transactions";
-import { TransactionListResponse } from "../../types";
+import { DashboardRole, TransactionListResponse } from "../../types";
 import Navbar from "../common/Navbar";
 import DashboardPagination from "./DashboardPagination";
 import TransactionChart from "./TransactionChart";
@@ -9,7 +9,7 @@ import TransactionList from "./TransactionList";
 import "./payments-dashboard.css";
 
 interface Props {
-  role: "emisor" | "receptor";
+  role: DashboardRole;
 }
 
 export default function TransactionsDashboard({ role }: Props) {
@@ -42,7 +42,7 @@ export default function TransactionsDashboard({ role }: Props) {
     const controller = new AbortController();
     async function load() {
       try {
-        const data = await getTransactions(page, 10, controller.signal);
+        const data = await getTransactions(page, 10, controller.signal, role);
         if (controller.signal.aborted) return;
         const lastPage = Math.max(1, Math.ceil(data.total / data.page_size));
         if (page > lastPage) {
@@ -60,7 +60,7 @@ export default function TransactionsDashboard({ role }: Props) {
 
     void load();
     return () => controller.abort();
-  }, [page, requestVersion]);
+  }, [page, requestVersion, role]);
 
   const current = result?.page === page ? result : undefined;
 
@@ -81,7 +81,7 @@ export default function TransactionsDashboard({ role }: Props) {
         </header>
 
         <div className={isSender ? "payments-workspace payments-workspace-sender" : "payments-workspace"}>
-          <TransactionForm onSuccess={handleCreated} />
+          <TransactionForm view={role} onSuccess={handleCreated} />
           {isSender && (
             <section className="payments-panel payments-chart" aria-labelledby="payments-chart-title">
               <div className="payments-panel-heading">
@@ -113,7 +113,7 @@ export default function TransactionsDashboard({ role }: Props) {
             </div>
           )}
           <div aria-busy={loading}>
-            {current && <TransactionList transactions={current.items} onRefresh={refresh} />}
+            {current && <TransactionList view={role} transactions={current.items} onRefresh={refresh} />}
           </div>
           {result && (
             <DashboardPagination page={page} pageSize={result.page_size} total={result.total} onPageChange={goTo} />
