@@ -61,7 +61,7 @@ En un entorno con cuentas reales, usa una base propia y configura `DEMO_MODE=fal
 
 ### Saldo simulado
 
-Cada cuenta nueva empieza con USD 1,000 y Q0. El envío debita USD en el momento en que se registra. Los quetzales quedan **por confirmar** para el beneficiario y pasan a **recibido y disponible** cuando confirma la recepción. Las solicitudes de fondos se registran sin modificar saldos. Si el saldo disponible no cubre un envío, la API devuelve HTTP 409 y conserva el historial.
+Cada cuenta nueva empieza con USD 1,000 y Q0. El envío debita USD en el momento en que se registra. Los quetzales quedan **por confirmar** para el beneficiario y pasan a **recibido y disponible** cuando confirma la recepción. Las solicitudes de fondos se registran sin modificar saldos. Si el saldo disponible no cubre un envío, la API devuelve HTTP 409 y conserva el historial. La cuenta de remitente de la demo puede recibir un crédito único de USD 1,000 si su historial anterior agotó el saldo al activar esta función.
 
 ### Conversión de moneda
 

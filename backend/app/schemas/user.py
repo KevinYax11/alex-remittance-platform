@@ -52,3 +52,4 @@ class WalletResponse(BaseModel):
     available_usd: Decimal
     available_gtq: Decimal
     pending_gtq: Decimal
+    demo_credit_usd: Decimal

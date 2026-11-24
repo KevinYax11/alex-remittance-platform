@@ -54,7 +54,8 @@ async def get_wallet(
         .scalar_subquery()
     )
     result = await db.execute(
-        select(User.available_usd, User.available_gtq, pending.label("pending_gtq")).where(User.id == user_id)
+        select(User.available_usd, User.available_gtq, pending.label("pending_gtq"), User.demo_credit_usd)
+        .where(User.id == user_id)
     )
     wallet = result.mappings().one_or_none()
     if wallet is None:

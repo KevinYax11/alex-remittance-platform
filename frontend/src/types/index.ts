@@ -34,4 +34,5 @@ export interface WalletBalance {
   available_usd: string;
   available_gtq: string;
   pending_gtq: string;
+  demo_credit_usd: string;
 }
