@@ -152,7 +152,7 @@
 .payments-error { color: #8c312a; }
 .payments-success { color: #136144; }
 .payments-dashboard[data-role="receptor"] .payments-form {
-  grid-template-columns: minmax(145px, .55fr) minmax(180px, 1fr) auto;
+  grid-template-columns: minmax(115px, .55fr) minmax(190px, 1.1fr) minmax(130px, .8fr) auto;
   align-items: start;
 }
 
@@ -283,6 +283,13 @@
 .payments-pagination button:disabled { border-color: #dbe3df; background: #edf1ef; color: #61716a; cursor: default; }
 .payments-page-gap { padding-inline: 2px; color: var(--payments-muted); }
 .payments-page-mobile { display: none; }
+
+@media (min-width: 761px) and (max-width: 900px) {
+  .payments-dashboard[data-role="receptor"] .payments-form {
+    grid-template-columns: minmax(115px, .55fr) minmax(190px, 1fr) minmax(150px, .8fr);
+  }
+  .payments-dashboard[data-role="receptor"] .payments-form-action { margin-top: 0; grid-column: 1 / -1; }
+}
 
 @media (max-width: 760px) {
   .payments-workspace-sender { grid-template-columns: minmax(0, 1fr); }

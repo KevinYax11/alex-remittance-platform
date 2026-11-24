@@ -91,7 +91,7 @@ export default function TransactionsDashboard({ role }: Props) {
                 </div>
               </div>
               <div hidden={!current}>
-                <TransactionChart transactions={current?.items ?? []} />
+                <TransactionChart transactions={current?.items.filter(item => item.type === "envio") ?? []} />
               </div>
               {!current && <p className="payments-empty">{error ? "Gráfico no disponible." : "Cargando gráfico…"}</p>}
             </section>
@@ -102,7 +102,7 @@ export default function TransactionsDashboard({ role }: Props) {
           <header className="payments-panel-heading payments-history-heading">
             <div>
               <h2 id="payments-history-title">Historial de transacciones</h2>
-              <p>{isSender ? "Consulta los importes y el estado de cada remesa."
+              <p>{isSender ? "Consulta tus envíos y las solicitudes dirigidas a tu cuenta."
                 : "Consulta tus solicitudes y confirma los envíos que recibas."}</p>
             </div>
           </header>

@@ -11,6 +11,9 @@ export interface Transaction {
   id: number;
   user_id: number;
   beneficiary_id: number | null;
+  requested_from_id: number | null;
+  requested_from_email: string | null;
+  requester_email: string | null;
   type: "envio" | "solicitud";
   status: "pendiente" | "confirmado";
   amount_usd: number;
