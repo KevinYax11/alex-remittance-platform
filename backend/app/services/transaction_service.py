@@ -1,7 +1,9 @@
+from decimal import Decimal, ROUND_HALF_UP
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, func, or_, update
 
 from app.models.transaction import Transaction, TransactionType, TransactionStatus
 from app.models.user import RoleEnum, User
@@ -10,6 +12,14 @@ from app.services.exchange_service import get_exchange_rate
 
 class SelfDirectedTransaction(ValueError):
     pass
+
+
+class InsufficientFunds(ValueError):
+    pass
+
+
+def cents(amount: Decimal) -> Decimal:
+    return amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 async def create_transaction(
@@ -26,23 +36,32 @@ async def create_transaction(
     if counterparty.role not in (counterparty_role, RoleEnum.ambos):
         return None
 
-    rate = await get_exchange_rate()
+    rate = Decimal(str(await get_exchange_rate()))
 
     if is_transfer:
-        amount_usd = data.amount_usd
-        amount_gtq = round(amount_usd * rate, 2)
+        amount_usd = cents(Decimal(str(data.amount_usd)))
+        amount_gtq = cents(amount_usd * rate)
+        # The guarded update serializes debits to the same balance.
+        debited_user = await db.scalar(
+            update(User)
+            .where(User.id == user_id, User.available_usd >= amount_usd)
+            .values(available_usd=User.available_usd - amount_usd)
+            .returning(User.id)
+        )
+        if debited_user is None:
+            raise InsufficientFunds()
     else:
-        amount_gtq = data.amount_gtq
-        amount_usd = round(amount_gtq / rate, 2)
+        amount_gtq = cents(Decimal(str(data.amount_gtq)))
+        amount_usd = cents(amount_gtq / rate)
 
     transaction = Transaction(
         user_id=user_id,
         beneficiary_id=counterparty.id if is_transfer else None,
         requested_from_id=None if is_transfer else counterparty.id,
         type=data.type,
-        amount_usd=amount_usd,
-        amount_gtq=amount_gtq,
-        exchange_rate=rate,
+        amount_usd=float(amount_usd),
+        amount_gtq=float(amount_gtq),
+        exchange_rate=float(rate),
         note=data.note,
     )
     db.add(transaction)
@@ -98,6 +117,12 @@ async def confirm_transaction(
         return None
 
     if transaction.status == TransactionStatus.pendiente:
+        amount_gtq = cents(Decimal(str(transaction.amount_gtq)))
+        await db.execute(
+            update(User)
+            .where(User.id == beneficiary_id)
+            .values(available_gtq=User.available_gtq + amount_gtq)
+        )
         transaction.status = TransactionStatus.confirmado
         await db.commit()
         await db.refresh(transaction)

@@ -1,5 +1,5 @@
 import api from "./axios";
-import { DashboardRole, Transaction, TransactionListResponse } from "../types";
+import { DashboardRole, Transaction, TransactionListResponse, WalletBalance } from "../types";
 
 export interface CreateTransactionPayload {
   type: "envio" | "solicitud";
@@ -34,3 +34,8 @@ export const confirmTransaction = async (id: number): Promise<Transaction> => {
   const response = await api.patch<Transaction>(`/transactions/${id}/confirm`);
   return response.data;
 };
+
+export async function getWallet(signal?: AbortSignal): Promise<WalletBalance> {
+  const response = await api.get<WalletBalance>("/users/me/wallet", { signal });
+  return response.data;
+}

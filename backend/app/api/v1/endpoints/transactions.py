@@ -8,7 +8,7 @@ from app.core.security import decode_access_token
 from app.models.transaction import TransactionType
 from app.models.user import RoleEnum
 from app.schemas.transaction import TransactionCreate, TransactionResponse, TransactionListResponse
-from app.services.transaction_service import SelfDirectedTransaction, create_transaction, get_transactions, confirm_transaction
+from app.services.transaction_service import InsufficientFunds, SelfDirectedTransaction, create_transaction, get_transactions, confirm_transaction
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 router = APIRouter()
@@ -42,6 +42,11 @@ async def create(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Ingresa el correo de otra cuenta. No puedes usar tu propio correo.",
+        ) from None
+    except InsufficientFunds:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Tu saldo en USD no alcanza para enviar esta remesa.",
         ) from None
     if transaction is None:
         raise HTTPException(
