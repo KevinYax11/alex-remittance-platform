@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Enum, DateTime
+from sqlalchemy import Column, Integer, String, Enum, DateTime, Numeric
 from sqlalchemy.orm import relationship
 import enum
 
@@ -19,6 +19,8 @@ class User(Base):
     role = Column(Enum(RoleEnum), nullable=False)
     terms_accepted_at = Column(DateTime(timezone=True))
     terms_version = Column(Integer)
+    available_usd = Column(Numeric(20, 2), nullable=False, server_default="1000.00")
+    available_gtq = Column(Numeric(20, 2), nullable=False, server_default="0.00")
 
     transactions = relationship(
         "Transaction", back_populates="user", foreign_keys="Transaction.user_id"

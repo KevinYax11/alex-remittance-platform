@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
@@ -46,3 +47,8 @@ class TokenResponse(BaseModel):
 class RegistrationResponse(TokenResponse):
     id: int
     email: EmailStr
+
+class WalletResponse(BaseModel):
+    available_usd: Decimal
+    available_gtq: Decimal
+    pending_gtq: Decimal

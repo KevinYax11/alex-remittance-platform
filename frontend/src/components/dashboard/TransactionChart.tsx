@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Transaction } from "../../types";
+import { DashboardRole, Transaction } from "../../types";
 
 interface Props {
   transactions: Transaction[];
+  view: DashboardRole;
 }
 
 const chartDates = new Intl.DateTimeFormat("es-GT", { day: "numeric", month: "short", timeZone: "America/Guatemala" });
 
-export default function TransactionChart({ transactions }: Props) {
-  const [currency, setCurrency] = useState<"USD" | "GTQ">("USD");
+export default function TransactionChart({ transactions, view }: Props) {
+  const [currency, setCurrency] = useState<"USD" | "GTQ">(view === "receptor" ? "GTQ" : "USD");
   if (!transactions.length) {
-    return <p className="payments-empty payments-chart-empty">Registra una remesa para ver la tendencia.</p>;
+    return <p className="payments-empty payments-chart-empty">{view === "emisor" ? "Aquí aparecerán tus envíos." : "Aquí aparecerán tus remesas confirmadas."}</p>;
   }
 
   const data = transactions.slice().reverse().map(transaction => ({
@@ -37,8 +38,8 @@ export default function TransactionChart({ transactions }: Props) {
           <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#526460" }} />
           <YAxis width={54} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#526460" }} />
           <Tooltip formatter={(value: number) => [money.format(value), currency]} />
-          <Line type="monotone" dataKey="amount" stroke="#0e6656" strokeWidth={2.5}
-            dot={{ r: 3, fill: "#0e6656" }} activeDot={{ r: 5 }} isAnimationActive={false} />
+          <Line type="monotone" dataKey="amount" stroke="var(--payments-accent)" strokeWidth={2.5}
+            dot={{ r: 3, fill: "var(--payments-accent)" }} activeDot={{ r: 5 }} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
     </>

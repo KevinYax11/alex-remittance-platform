@@ -1,5 +1,7 @@
 import asyncio
 import os
+from concurrent.futures import ThreadPoolExecutor
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -227,3 +229,51 @@ def test_registered_accounts_can_send_and_receive_with_the_same_session(client):
     assert list_transactions(client, alice, view="emisor")["total"] == 1
     assert list_transactions(client, bob, view="receptor")["total"] == 1
     assert client.patch(f"{TRANSACTIONS}{request['id']}/confirm", headers=bob).status_code == 404
+
+
+def test_wallet_prevents_concurrent_overspending_and_credits_a_remittance_only_once(client):
+    sender = login(client, SENDER_EMAIL)
+    beneficiary = login(client, BENEFICIARY_EMAIL)
+
+    def wallet(headers):
+        response = client.get("/api/v1/users/me/wallet", headers=headers)
+        assert response.status_code == 200, response.text
+        return {key: Decimal(value) for key, value in response.json().items()}
+
+    assert wallet(sender)["available_usd"] == Decimal("1000")
+    assert wallet(beneficiary)["available_gtq"] == 0
+
+    def send(_):
+        return client.post(
+            TRANSACTIONS,
+            headers=sender,
+            json={"type": "envio", "amount_usd": 700, "beneficiary_email": BENEFICIARY_EMAIL},
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        sends = list(pool.map(send, range(2)))
+
+    assert sorted(response.status_code for response in sends) == [201, 409]
+    transfer = next(response.json() for response in sends if response.status_code == 201)
+    assert list_transactions(client, sender)["total"] == 1
+    assert wallet(sender)["available_usd"] == Decimal("300")
+    assert wallet(beneficiary)["available_gtq"] == 0
+    assert wallet(beneficiary)["pending_gtq"] == Decimal("5425")
+
+    confirm_url = f"{TRANSACTIONS}{transfer['id']}/confirm"
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        confirmations = list(pool.map(lambda _: client.patch(confirm_url, headers=beneficiary), range(2)))
+
+    assert [response.status_code for response in confirmations] == [200, 200]
+    assert all(response.json()["status"] == "confirmado" for response in confirmations)
+    assert wallet(beneficiary)["available_gtq"] == Decimal("5425")
+    assert wallet(beneficiary)["pending_gtq"] == 0
+
+    before = wallet(beneficiary)
+    response = client.post(
+        TRANSACTIONS, headers=beneficiary,
+        json={"type": "solicitud", "amount_gtq": 100, "requested_from_email": SENDER_EMAIL},
+    )
+    assert response.status_code == 201, response.text
+    assert wallet(beneficiary) == before
+    assert wallet(sender)["available_usd"] == Decimal("300")

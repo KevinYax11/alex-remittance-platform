@@ -29,3 +29,9 @@ export interface TransactionListResponse {
   page: number;
   page_size: number;
 }
+
+export interface WalletBalance {
+  available_usd: string;
+  available_gtq: string;
+  pending_gtq: string;
+}

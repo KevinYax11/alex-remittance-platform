@@ -59,6 +59,10 @@ En un entorno con cuentas reales, usa una base propia y configura `DEMO_MODE=fal
    * Registra solicitudes de dinero en GTQ por correo. La cuenta destino ve la solicitud en **Enviar**.
    * Visualiza los envíos dirigidos a su cuenta y confirma su recepción en un clic (`PATCH /transactions/{id}/confirm`). El remitente ve el mismo estado en su historial.
 
+### Saldo simulado
+
+Cada cuenta nueva empieza con USD 1,000 y Q0. El envío debita USD en el momento en que se registra. Los quetzales quedan **por confirmar** para el beneficiario y pasan a **recibido y disponible** cuando confirma la recepción. Las solicitudes de fondos se registran sin modificar saldos. Si el saldo disponible no cubre un envío, la API devuelve HTTP 409 y conserva el historial.
+
 ### Conversión de moneda
 
 El backend consulta la tasa de referencia USD/GTQ en [Frankfurter v2](https://frankfurter.dev/currencies/usd/gtq/).
@@ -113,6 +117,7 @@ npm start
 
 ### Usuarios (`/api/v1/users`)
 * `GET /api/v1/users/me` *(Protegido)* - Retorna los datos del perfil del usuario actualmente autenticado.
+* `GET /api/v1/users/me/wallet` *(Protegido)* - Devuelve los saldos disponibles en USD y GTQ, y el importe en GTQ pendiente de confirmación.
 
 ### Transacciones (`/api/v1/transactions`)
 * `POST /api/v1/transactions/` *(Protegido)* - Registrar un envío (`type: envio`, `amount_usd`, `beneficiary_email`) o una solicitud (`type: solicitud`, `amount_gtq`, `requested_from_email`).
