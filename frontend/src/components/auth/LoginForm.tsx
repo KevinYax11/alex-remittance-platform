@@ -1,175 +1,98 @@
+import { isAxiosError } from "axios";
 import { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
 import { loginApi } from "../../api/auth";
+import { useAuth } from "../../context/AuthContext";
 
 const demoAccounts = [
-  { email: "sender@sendapayments.com", label: "Probar como Remitente" },
-  { email: "receiver@sendapayments.com", label: "Probar como Beneficiario" },
+  { email: "sender@sendapayments.com", name: "Remitente", detail: "Enviar una remesa" },
+  { email: "receiver@sendapayments.com", name: "Beneficiario", detail: "Confirmar una remesa" },
 ];
+const demoEnabled = process.env.REACT_APP_DEMO_MODE === "true";
 
-const LoginForm = () => {
+export default function LoginForm() {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [pending, setPending] = useState<string>();
+  const busy = pending !== undefined;
 
-  const signIn = async (signInEmail: string, signInPassword: string) => {
+  async function signIn(signInEmail: string, signInPassword: string, method: string) {
+    if (busy) return;
     setError("");
     if (!signInEmail.trim() || !signInPassword) {
-      setError("Por favor completa todos los campos.");
+      setError("Ingresa tu correo y contraseña.");
       return;
     }
 
-    setLoading(true);
+    setPending(method);
     try {
-      const user = await loginApi({
-        email: signInEmail.trim(),
-        password: signInPassword,
-      });
+      const user = await loginApi({ email: signInEmail.trim(), password: signInPassword });
       login(user);
-    } catch (err: any) {
-      const backendError =
-        err.response?.data?.detail ||
-        (err.message === "Network Error"
-          ? "No se pudo conectar con el servidor. Verifica que el backend esté en ejecución."
-          : "Credenciales incorrectas o error en el inicio de sesión.");
-      setError(backendError);
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 401) {
+        setError("El correo o la contraseña son incorrectos.");
+      } else if (isAxiosError(error) && !error.response) {
+        setError("No pudimos conectar con el servidor. Inténtalo de nuevo.");
+      } else {
+        setError("No pudimos iniciar sesión. Inténtalo de nuevo.");
+      }
     } finally {
-      setLoading(false);
+      setPending(undefined);
     }
-  };
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    void signIn(email, password);
-  };
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void signIn(email, password, "manual");
+  }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        backgroundColor: "#ffffff",
-        padding: "24px",
-        borderRadius: "8px",
-        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-        border: "1px solid #e5e7eb",
-      }}
-    >
-      <h2 style={{ marginTop: 0, marginBottom: "16px", color: "#111827", fontSize: "1.25rem" }}>
-        Iniciar Sesión
-      </h2>
-
-      {error && (
-        <div
-          style={{
-            backgroundColor: "#fef2f2",
-            border: "1px solid #fecaca",
-            color: "#991b1b",
-            padding: "10px 12px",
-            borderRadius: "6px",
-            marginBottom: "16px",
-            fontSize: "0.875rem",
-          }}
-        >
-          {error}
+    <>
+      {error && <p className="payments-login-error" role="alert">{error}</p>}
+      <form className="payments-login-form" onSubmit={handleSubmit} aria-busy={pending === "manual"}>
+        <div className="payments-login-field">
+          <label htmlFor="login-email">Correo electrónico</label>
+          <input id="login-email" name="email" type="email" inputMode="email" autoComplete="username"
+            value={email} onChange={event => setEmail(event.target.value)} required disabled={busy} />
         </div>
-      )}
-
-      <div style={{ marginBottom: "16px" }}>
-        <label
-          style={{
-            display: "block",
-            marginBottom: "6px",
-            fontSize: "0.875rem",
-            fontWeight: 500,
-            color: "#374151",
-          }}
-        >
-          Correo Electrónico
-        </label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="usuario@ejemplo.com"
-          required
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            borderRadius: "6px",
-            border: "1px solid #d1d5db",
-            boxSizing: "border-box",
-            fontSize: "0.95rem",
-          }}
-        />
-      </div>
-
-      <div style={{ marginBottom: "20px" }}>
-        <label
-          style={{
-            display: "block",
-            marginBottom: "6px",
-            fontSize: "0.875rem",
-            fontWeight: 500,
-            color: "#374151",
-          }}
-        >
-          Contraseña
-        </label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-          required
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            borderRadius: "6px",
-            border: "1px solid #d1d5db",
-            boxSizing: "border-box",
-            fontSize: "0.95rem",
-          }}
-        />
-      </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        style={{
-          width: "100%",
-          padding: "10px 16px",
-          backgroundColor: loading ? "#9ca3af" : "#1a1a2e",
-          color: "#ffffff",
-          border: "none",
-          borderRadius: "6px",
-          fontSize: "0.95rem",
-          fontWeight: 600,
-          cursor: loading ? "not-allowed" : "pointer",
-          transition: "background-color 0.2s ease",
-        }}
-      >
-        {loading ? "Iniciando sesión..." : "Entrar al Sistema"}
-      </button>
-      {process.env.REACT_APP_DEMO_MODE === "true" && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "12px" }}>
-          {demoAccounts.map((account) => (
-            <button
-              key={account.email}
-              type="button"
-              disabled={loading}
-              onClick={() => void signIn(account.email, "SendaPass123!")}
-            >
-              {account.label}
+        <div className="payments-login-field">
+          <label htmlFor="login-password">Contraseña</label>
+          <div className="payments-password-field">
+            <input id="login-password" name="password" type={passwordVisible ? "text" : "password"}
+              autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)}
+              required disabled={busy} />
+            <button type="button" className="payments-password-toggle" aria-controls="login-password"
+              aria-label={passwordVisible ? "Ocultar contraseña" : "Mostrar contraseña"}
+              disabled={busy} onClick={() => setPasswordVisible(visible => !visible)}>
+              {passwordVisible ? "Ocultar" : "Mostrar"}
             </button>
-          ))}
+          </div>
         </div>
+        <button type="submit" className="payments-login-submit" disabled={busy}>
+          {pending === "manual" ? "Entrando…" : "Entrar"}
+          <span aria-hidden="true">→</span>
+        </button>
+      </form>
+      {demoEnabled && (
+        <section className="payments-demo" aria-labelledby="payments-demo-title">
+          <h2 id="payments-demo-title">Probar la demo</h2>
+          <div className="payments-demo-options">
+            {demoAccounts.map(account => (
+              <button key={account.email} type="button" aria-label={`Probar como ${account.name}`}
+                disabled={busy} onClick={() => void signIn(account.email, "SendaPass123!", account.email)}>
+                <span>
+                  <strong>{account.name}</strong>
+                  <small>{pending === account.email ? "Entrando…" : account.detail}</small>
+                </span>
+                <span className="payments-demo-arrow" aria-hidden="true">↗</span>
+              </button>
+            ))}
+          </div>
+          <p className="payments-demo-note">Las operaciones de demo son simuladas.</p>
+        </section>
       )}
-    </form>
+    </>
   );
-};
-
-export default LoginForm;
+}

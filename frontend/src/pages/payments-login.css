@@ -1,0 +1,178 @@
+.payments-login {
+  --login-ink: #172d29;
+  --login-muted: #4d625b;
+  --login-accent: #24584a;
+  --login-paper: #f6f5ee;
+  --login-border: #bac6bf;
+  display: grid;
+  min-height: 100vh;
+  min-height: 100svh;
+  grid-template-columns: minmax(0, 1.13fr) minmax(0, 1fr);
+  background: var(--login-paper);
+  color: var(--login-ink);
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.payments-login *, .payments-login *::before, .payments-login *::after { box-sizing: border-box; }
+.payments-login :focus-visible { outline: 2px solid #a06b30; outline-offset: 3px; }
+.payments-login button, .payments-login input { font-family: inherit; }
+
+.payments-login-visual {
+  display: flex;
+  align-items: flex-end;
+  min-height: 100%;
+  padding: clamp(28px, 6.4vw, 102px);
+  background:
+    linear-gradient(180deg, #152c2400 38%, #14282140 57%, #11251dea 100%),
+    #1c332a url("../assets/senda-corridor.webp") center / cover no-repeat;
+}
+
+.payments-login-story { max-width: 590px; color: #fff8e9; }
+.payments-corridor {
+  margin: 0 0 18px;
+  color: #fae2b8;
+  font: 650 .8rem ui-monospace, Consolas, monospace;
+  letter-spacing: .17em;
+}
+
+.payments-corridor span { color: #f1c37d; }
+.payments-login-display {
+  margin: 0;
+  max-width: 13ch;
+  font: 400 clamp(2.75rem, 5.4vw, 6rem) / .98 Georgia, "Times New Roman", serif;
+  letter-spacing: -.072em;
+  text-wrap: balance;
+}
+
+.payments-login-side {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 26px;
+  padding: clamp(26px, 4.6vw, 82px);
+}
+
+.payments-login-brand, .payments-login-content { width: min(100%, 420px); margin-inline: auto; }
+.payments-login-brand { display: flex; align-items: center; gap: 11px; color: var(--login-ink); }
+.payments-login-brand strong { font-size: 1.21rem; font-weight: 750; letter-spacing: -.045em; }
+.payments-login-brand strong span { font-weight: 500; }
+.payments-login-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #1b3d34;
+  color: #fff8e9;
+  font-size: 1.32rem;
+  line-height: 1;
+}
+
+.payments-login-content { align-self: center; padding-block: 3px 20px; }
+.payments-login-content h1 {
+  margin: 0 0 23px;
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-weight: 660;
+  line-height: 1.08;
+  letter-spacing: -.055em;
+}
+
+.payments-login-form { display: grid; gap: 15px; }
+.payments-login-field { display: grid; gap: 7px; }
+.payments-login-field label { font-size: .875rem; font-weight: 650; }
+
+.payments-login-field > input, .payments-password-field {
+  min-height: 47px;
+  border: 1px solid var(--login-border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.payments-login-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 12px;
+  color: var(--login-ink);
+}
+
+.payments-password-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; }
+.payments-password-field:focus-within { outline: 2px solid #a06b30; outline-offset: 3px; }
+.payments-password-field input { border: 0; border-radius: inherit; background: none; outline: none; }
+.payments-password-toggle {
+  min-width: 75px;
+  margin: 4px;
+  border: 0;
+  border-radius: 4px;
+  padding: 3px 6px;
+  background: transparent;
+  color: var(--login-accent);
+  font-size: .78rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.payments-password-toggle:hover:not(:disabled) { background: #edf1ec; }
+.payments-login-submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 47px;
+  margin-top: 3px;
+  padding: 8px 14px;
+  border: 1px solid var(--login-accent);
+  border-radius: 6px;
+  background: var(--login-accent);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.payments-login-submit:hover:not(:disabled) { background: #193f35; }
+.payments-login button:disabled { opacity: .65; cursor: wait; }
+
+.payments-demo { margin-top: 25px; border-top: 1px solid #ccd4cb; padding-top: 17px; }
+.payments-demo h2 { margin: 0 0 10px; font-size: .94rem; font-weight: 680; }
+.payments-demo-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+
+.payments-demo-options button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  width: 100%;
+  min-height: 62px;
+  border: 1px solid #bfcac0;
+  border-radius: 6px;
+  padding: 9px 10px;
+  background: #fbfbf6;
+  color: var(--login-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.payments-demo-options button:hover:not(:disabled) { border-color: var(--login-accent); background: #eaf1e8; }
+.payments-demo-options strong, .payments-demo-options small { display: block; }
+.payments-demo-options strong { font-size: .865rem; }
+.payments-demo-options small { margin-top: 3px; color: var(--login-muted); font-size: .74rem; line-height: 1.25; }
+.payments-demo-arrow { color: var(--login-accent); font-weight: 700; }
+.payments-demo-note { margin: 11px 0 0; color: var(--login-muted); font-size: .78rem; }
+.payments-login-error {
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  border-left: 3px solid #9f4434;
+  background: #faece6;
+  color: #7e3428;
+  font-size: .86rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 800px) {
+  .payments-login { grid-template-columns: minmax(0, 1fr); }
+  .payments-login-visual { display: none; }
+  .payments-login-side { gap: 35px; padding: 25px 20px; }
+  .payments-login-content { align-self: start; padding-bottom: 0; }
+  .payments-login-content h1 { margin-bottom: 19px; }
+}
+
+@media (max-width: 350px) {
+  .payments-demo-options { grid-template-columns: minmax(0, 1fr); }
+}
